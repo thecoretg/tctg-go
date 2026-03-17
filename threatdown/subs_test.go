@@ -16,7 +16,7 @@ func TestSubscriptionLifecycle(t *testing.T) {
 		Product:     ProductTypeEDR,
 		MachineType: MachineTypeWorkstation,
 		TermType:    TermTypePaid,
-		TermLength:  0,
+		TermLength:  "0",
 	})
 	if err != nil {
 		t.Fatalf("CreateSiteSubscription: %v", err)

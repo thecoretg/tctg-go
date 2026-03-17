@@ -10,7 +10,7 @@ type SiteSubscription struct {
 	Allocations SiteSubscriptionAllocations `json:"allocations"`
 	MachineType MachineType                 `json:"machine_type"`
 	Product     ProductType                 `json:"product"`
-	TermLength  int                         `json:"term_length"`
+	TermLength  string                      `json:"term_length"`
 	TermType    TermType                    `json:"term_type"`
 }
 

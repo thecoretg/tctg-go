@@ -1,6 +1,7 @@
 package threatdown
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 )
@@ -76,6 +77,10 @@ func (c *Client) GetSite(ctx context.Context, id string) (*Site, error) {
 	if err != nil {
 		return nil, fmt.Errorf("get site: %w", err)
 	}
+
+	// The GET single endpoint returns a different ID format than POST/LIST.
+	// Overwrite with the ID used in the request so callers always have the
+	// hex-encoded form required for subsequent API calls.
 	site.ID = id
 	return site, nil
 }
@@ -85,18 +90,15 @@ func (c *Client) UpdateSite(ctx context.Context, id string, input SiteInput) (*S
 	if err != nil {
 		return nil, fmt.Errorf("getting existing site for update: %w", err)
 	}
-	if input.CompanyName == "" {
-		input.CompanyName = existing.CompanyName
-	}
-	if input.FirstName == "" {
-		input.FirstName = existing.FirstName
-	}
-	if input.LastName == "" {
-		input.LastName = existing.LastName
-	}
-	if input.Email == "" {
-		input.Email = existing.Email
-	}
+
+	// the following values are required, even for a put, so use existing if
+	// a zero value is in the input.
+	input.CompanyName = cmp.Or(input.CompanyName, existing.CompanyName)
+	input.FirstName = cmp.Or(input.FirstName, existing.FirstName)
+	input.LastName = cmp.Or(input.LastName, existing.LastName)
+	input.Email = cmp.Or(input.Email, existing.Email)
+
+	// same as above, but can't use cmp with slices
 	if input.AccountOwner == nil {
 		owners := make([]string, len(existing.AccountOwner))
 		for i, u := range existing.AccountOwner {
