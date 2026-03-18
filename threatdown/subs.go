@@ -12,6 +12,7 @@ type SiteSubscription struct {
 	Product     ProductType                 `json:"product"`
 	TermLength  string                      `json:"term_length"`
 	TermType    TermType                    `json:"term_type"`
+	Usage       SiteSubscriptionAllocations `json:"usage,omitzero"`
 }
 
 type SiteSubscriptionAllocations struct {
