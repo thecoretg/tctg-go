@@ -1,4 +1,4 @@
-.PHONY: test test-td test-rewst
+.PHONY: test test-td test-rewst test-sf
 
 test:
 	go test -v ./...
@@ -8,3 +8,6 @@ test-td:
 
 test-rewst:
 	go test -v ./rewst/...
+
+test-sf:
+	go test -v ./salesforce/...
