@@ -65,12 +65,7 @@ type DeviceDetails struct {
 		TimeSinceBoot              string `json:"time_since_boot"`
 		LastUser                   string `json:"last_user"`
 		AssetTag                   string `json:"asset_tag"`
-		AssignedUser               struct {
-			Email      string `json:"email"`
-			Name       string `json:"name"`
-			ID         string `json:"id"`
-			IsArchived bool   `json:"is_archived"`
-		} `json:"assigned_user"`
+		AssignedUser               DeviceUser `json:"assigned_user"`
 		BlueprintName string `json:"blueprint_name"`
 		BlueprintUUID string `json:"blueprint_uuid"`
 	} `json:"general"`
