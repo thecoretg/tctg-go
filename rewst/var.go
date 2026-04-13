@@ -4,9 +4,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
+	"golang.org/x/sync/errgroup"
 )
 
 type (
+	BulkGetOrgVarMapInput struct {
+		VarNames       []string
+		ExcludedOrgIDs []string
+	}
+
 	GetOrgVarMapInput struct {
 		VarName        string   `json:"var_name"`
 		ExcludedOrgIDs []string `json:"excluded_org_ids"`
@@ -44,6 +51,32 @@ func (c *Client) UpsertOrgVar(ctx context.Context, input UpsertOrgVarInput) erro
 	}
 
 	return nil
+}
+
+func (c *Client) BulkGetOrgVarMap(ctx context.Context, input BulkGetOrgVarMapInput) (map[string]OrgVarMap, error) {
+	data := make(map[string]OrgVarMap, len(input.VarNames))
+	g, ctx := errgroup.WithContext(ctx)
+
+	for _, n := range input.VarNames {
+		g.Go(func() error {
+			in := GetOrgVarMapInput{
+				VarName:        n,
+				ExcludedOrgIDs: input.ExcludedOrgIDs,
+			}
+			m, err := c.GetOrgVarMap(ctx, in)
+			if err != nil {
+				return fmt.Errorf("getting org var map: %w", err)
+			}
+			data[n] = *m
+			return nil
+		})
+	}
+
+	if err := g.Wait(); err != nil {
+		return nil, err
+	}
+
+	return data, nil
 }
 
 func (c *Client) GetOrgVarMap(ctx context.Context, input GetOrgVarMapInput) (*OrgVarMap, error) {

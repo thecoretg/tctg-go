@@ -3,6 +3,7 @@ package rewst
 import (
 	"context"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/joho/godotenv"
@@ -41,6 +42,26 @@ func TestUpsertOrgVar(t *testing.T) {
 	})
 	if err != nil {
 		t.Fatalf("UpsertOrgVar: %v", err)
+	}
+}
+
+func TestBulkGetOrgVarMap(t *testing.T) {
+	c := newTestClient(t)
+	ctx := context.Background()
+
+	varNames := strings.Split(os.Getenv("REWST_BULK_GET_VAR_NAMES"), ",")
+	if len(varNames) == 0 || varNames[0] == "" {
+		t.Skip("skipping: REWST_BULK_GET_VAR_NAMES must be set (comma-separated)")
+	}
+
+	result, err := c.BulkGetOrgVarMap(ctx, BulkGetOrgVarMapInput{
+		VarNames: varNames,
+	})
+	if err != nil {
+		t.Fatalf("BulkGetOrgVarMap: %v", err)
+	}
+	for varName, m := range result {
+		t.Logf("var %q: %d entries", varName, len(m.Map))
 	}
 }
 
