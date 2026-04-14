@@ -56,7 +56,7 @@ func get[T any](ctx context.Context, c *Client, url string, params map[string]st
 		if res.StatusCode() == http.StatusNotFound {
 			return nil, ErrNotFound
 		}
-		return nil, fmt.Errorf("error response from Salesforce: %s", res.String())
+		return nil, fmt.Errorf("error response from Salesforce: %s [%d]", res.String(), res.StatusCode())
 	}
 
 	return &target, nil

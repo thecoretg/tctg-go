@@ -25,7 +25,7 @@ func get[T any](ctx context.Context, c *Client, url string, params map[string]st
 		if res.StatusCode() == http.StatusNotFound {
 			return nil, ErrNotFound
 		}
-		return nil, fmt.Errorf("error response from Threatdown API: %s", res.String())
+		return nil, fmt.Errorf("error response from Threatdown API: %s [%d]", res.String(), res.StatusCode())
 	}
 
 	return &target, nil
@@ -45,7 +45,7 @@ func post[T any](ctx context.Context, c *Client, url string, body any) (*T, erro
 	}
 
 	if res.IsError() {
-		return nil, fmt.Errorf("error response from Threatdown API: %s", res.String())
+		return nil, fmt.Errorf("error response from Threatdown API: %s [%d]", res.String(), res.StatusCode())
 	}
 
 	return &target, nil
@@ -67,7 +67,7 @@ func put[T any](ctx context.Context, c *Client, url string, body any) (*T, error
 		if res.StatusCode() == http.StatusNotFound {
 			return nil, ErrNotFound
 		}
-		return nil, fmt.Errorf("error response from Threatdown API: %s", res.String())
+		return nil, fmt.Errorf("error response from Threatdown API: %s [%d]", res.String(), res.StatusCode())
 	}
 
 	return &target, nil
@@ -114,7 +114,7 @@ func del(ctx context.Context, c *Client, url string) error {
 		if res.StatusCode() == http.StatusNotFound {
 			return ErrNotFound
 		}
-		return fmt.Errorf("error response from Threatdown API: %s", res.String())
+		return fmt.Errorf("error response from Threatdown API: %s [%d]", res.String(), res.StatusCode())
 	}
 
 	return nil

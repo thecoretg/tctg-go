@@ -37,7 +37,7 @@ func Get[T any](ctx context.Context, wc *WebhookClient, url string, params map[s
 		if res.StatusCode() == http.StatusNotFound {
 			return nil, ErrNotFound
 		}
-		return nil, fmt.Errorf("error response from Rewst: %s", res.String())
+		return nil, fmt.Errorf("error response from Rewst: %s [%d]", res.String(), res.StatusCode())
 	}
 	return &target, nil
 }
@@ -59,7 +59,7 @@ func Post[T any](ctx context.Context, wc *WebhookClient, url string, body any) (
 		return nil, err
 	}
 	if res.IsError() {
-		return nil, fmt.Errorf("error response from Rewst: %s", res.String())
+		return nil, fmt.Errorf("error response from Rewst: %s [%d]", res.String(), res.StatusCode())
 	}
 	return &target, nil
 }
