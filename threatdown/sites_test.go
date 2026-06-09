@@ -50,7 +50,7 @@ func TestListSites(t *testing.T) {
 	c := newTestClient(t)
 	ctx := context.Background()
 
-	sites, err := c.ListSites(ctx)
+	sites, err := c.ListSites(ctx, false)
 	if err != nil {
 		t.Fatalf("ListSites: %v", err)
 	}
@@ -66,7 +66,7 @@ func TestSiteLifecycle(t *testing.T) {
 	t.Logf("created site %s: %s", site.ID, site.CompanyName)
 
 	// Get
-	got, err := c.GetSite(ctx, site.ID)
+	got, err := c.GetSite(ctx, site.ID, false)
 	if err != nil {
 		t.Fatalf("GetSite: %v", err)
 	}

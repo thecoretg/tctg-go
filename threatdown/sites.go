@@ -7,10 +7,20 @@ import (
 )
 
 type Site struct {
-	ID                     string `json:"id"`
-	AccountID              string `json:"accountid,omitempty"`
-	CompanyName            string `json:"company_name"`
-	AccountOwner           []User `json:"account_owner"`
+	ID          string `json:"id"`
+	AccountID   string `json:"accountid,omitempty"`
+	CompanyName string `json:"company_name"`
+
+	// AccountOwner is the built-in list of owner users from ThreatDown.
+	// It is a massive list of objects which is returned for each site. For a shortened
+	// list of emails, set shortenOwner to true.
+	AccountOwner []User `json:"account_owner"`
+
+	// OwnerEmails is a list of owner emails; this is a helper within tctg-go and is not
+	// an item returned by the API. It is meant to drastically reduce the size of ListSites
+	// outputs since it is likely to include hundreds of the same massive list.
+	OwnerEmails []string `json:"owner_emails,omitempty"`
+
 	FirstName              string `json:"firstname"`
 	LastName               string `json:"lastname"`
 	Email                  string `json:"email"`
@@ -57,22 +67,33 @@ func (c *Client) CreateSite(ctx context.Context, input SiteInput) (*Site, error)
 		return nil, fmt.Errorf("create site: %w", err)
 	}
 
-	site, err := c.GetSite(ctx, result.ID)
+	site, err := c.GetSite(ctx, result.ID, false)
 	if err != nil {
 		return nil, fmt.Errorf("getting site from id: %w", err)
 	}
 	return site, nil
 }
 
-func (c *Client) ListSites(ctx context.Context) ([]Site, error) {
+func (c *Client) ListSites(ctx context.Context, shortenOwner bool) ([]Site, error) {
 	result, err := get[sitesResp](ctx, c, endpointURLV1("sites"), nil)
 	if err != nil {
 		return nil, fmt.Errorf("list sites: %w", err)
 	}
+	if shortenOwner {
+		for i := range result.Sites {
+			s := &result.Sites[i]
+			emails := make([]string, len(s.AccountOwner))
+			for j, u := range s.AccountOwner {
+				emails[j] = u.Email
+			}
+			s.OwnerEmails = emails
+			s.AccountOwner = nil
+		}
+	}
 	return result.Sites, nil
 }
 
-func (c *Client) GetSite(ctx context.Context, id string) (*Site, error) {
+func (c *Client) GetSite(ctx context.Context, id string, shortenOwner bool) (*Site, error) {
 	site, err := get[Site](ctx, c, endpointURLV1("sites/"+id), nil)
 	if err != nil {
 		return nil, fmt.Errorf("get site: %w", err)
@@ -82,11 +103,19 @@ func (c *Client) GetSite(ctx context.Context, id string) (*Site, error) {
 	// Overwrite with the ID used in the request so callers always have the
 	// hex-encoded form required for subsequent API calls.
 	site.ID = id
+	if shortenOwner {
+		emails := make([]string, len(site.AccountOwner))
+		for i, u := range site.AccountOwner {
+			emails[i] = u.Email
+		}
+		site.OwnerEmails = emails
+		site.AccountOwner = nil
+	}
 	return site, nil
 }
 
 func (c *Client) UpdateSite(ctx context.Context, id string, input SiteInput) (*Site, error) {
-	existing, err := c.GetSite(ctx, id)
+	existing, err := c.GetSite(ctx, id, false)
 	if err != nil {
 		return nil, fmt.Errorf("getting existing site for update: %w", err)
 	}
@@ -112,7 +141,7 @@ func (c *Client) UpdateSite(ctx context.Context, id string, input SiteInput) (*S
 		return nil, fmt.Errorf("update site: %w", err)
 	}
 
-	site, err := c.GetSite(ctx, id)
+	site, err := c.GetSite(ctx, id, false)
 	if err != nil {
 		return nil, fmt.Errorf("getting site from id: %w", err)
 	}
