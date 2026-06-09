@@ -25,7 +25,7 @@ func NewClient(creds *Creds) *Client {
 	c.SetHeader("Accept", "application/json")
 	c.SetHeader("clientId", creds.ClientID)
 	c.SetRetryCount(3)
-	c.SetDisableWarn(true)
+	c.SetLoggerWarnLevel(false)
 
 	return &Client{restClient: c, creds: creds}
 }

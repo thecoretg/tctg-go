@@ -52,7 +52,7 @@ func get[T any](ctx context.Context, c *Client, url string, params map[string]st
 		return nil, err
 	}
 
-	if res.IsError() {
+	if res.IsStatusFailure() {
 		if res.StatusCode() == http.StatusNotFound {
 			return nil, ErrNotFound
 		}

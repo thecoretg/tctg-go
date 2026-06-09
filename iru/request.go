@@ -18,7 +18,7 @@ func Get[T any](ctx context.Context, c *Client, path string, params map[string]s
 	if err != nil {
 		return nil, err
 	}
-	if res.IsError() {
+	if res.IsStatusFailure() {
 		if res.StatusCode() == http.StatusNotFound {
 			return nil, ErrNotFound
 		}
@@ -38,7 +38,7 @@ func Post[T any](ctx context.Context, c *Client, path string, body any) (*T, err
 	if err != nil {
 		return nil, err
 	}
-	if res.IsError() {
+	if res.IsStatusFailure() {
 		return nil, fmt.Errorf("error response from iru: %s", res.String())
 	}
 	return &target, nil
@@ -55,7 +55,7 @@ func Patch[T any](ctx context.Context, c *Client, path string, body any) (*T, er
 	if err != nil {
 		return nil, err
 	}
-	if res.IsError() {
+	if res.IsStatusFailure() {
 		return nil, fmt.Errorf("error response from iru: %s", res.String())
 	}
 	return &target, nil
@@ -68,7 +68,7 @@ func Delete(ctx context.Context, c *Client, path string) error {
 	if err != nil {
 		return err
 	}
-	if res.IsError() {
+	if res.IsStatusFailure() {
 		return fmt.Errorf("error response from iru: %s", res.String())
 	}
 	return nil

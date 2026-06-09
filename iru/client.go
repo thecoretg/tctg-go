@@ -22,7 +22,7 @@ func NewClient(cfg Config) *Client {
 	rc.SetHeader("Accept", "application/json")
 	rc.SetAuthToken(cfg.APIKey)
 	rc.SetRetryCount(3)
-	rc.SetDisableWarn(true)
+	rc.SetLoggerWarnLevel(false)
 	rc.SetBaseURL(baseURL(cfg.Subdomain))
 
 	return &Client{

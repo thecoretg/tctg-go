@@ -25,7 +25,7 @@ func GetOne[T any](ctx context.Context, c *Client, endpoint string, params map[s
 		return nil, err
 	}
 
-	if res.IsError() {
+	if res.IsStatusFailure() {
 		if res.StatusCode() == http.StatusNotFound {
 			return nil, ErrNotFound
 		}
@@ -50,7 +50,7 @@ func GetMany[T any](ctx context.Context, c *Client, endpoint string, params map[
 			return nil, err
 		}
 
-		if res.IsError() {
+		if res.IsStatusFailure() {
 			if res.StatusCode() == http.StatusNotFound {
 				return nil, ErrNotFound
 			}
@@ -76,7 +76,7 @@ func Post[T any](ctx context.Context, c *Client, endpoint string, body any) (*T,
 		return nil, err
 	}
 
-	if res.IsError() {
+	if res.IsStatusFailure() {
 		return nil, fmt.Errorf("error response from ConnectWise API: %s", res.String())
 	}
 
@@ -94,7 +94,7 @@ func Put[T any](ctx context.Context, c *Client, endpoint string, body any) (*T, 
 		return nil, err
 	}
 
-	if res.IsError() {
+	if res.IsStatusFailure() {
 		if res.StatusCode() == http.StatusNotFound {
 			return nil, ErrNotFound
 		}
@@ -115,7 +115,7 @@ func Patch[T any](ctx context.Context, c *Client, endpoint string, patchOps []Pa
 		return nil, err
 	}
 
-	if res.IsError() {
+	if res.IsStatusFailure() {
 		return nil, fmt.Errorf("error response from ConnectWise API: %s", res.String())
 	}
 
@@ -130,7 +130,7 @@ func Delete(ctx context.Context, c *Client, endpoint string) error {
 		return err
 	}
 
-	if res.IsError() {
+	if res.IsStatusFailure() {
 		if res.StatusCode() == http.StatusNotFound {
 			return ErrNotFound
 		}

@@ -19,7 +19,7 @@ func NewWebhookClient(secret string) *WebhookClient {
 	rc.SetHeader("Accept", "application/json")
 	rc.SetHeader("x-rewst-secret", secret)
 	rc.SetRetryCount(3)
-	rc.SetDisableWarn(true)
+	rc.SetLoggerWarnLevel(false)
 	return &WebhookClient{rc: rc}
 }
 
@@ -33,7 +33,7 @@ func Get[T any](ctx context.Context, wc *WebhookClient, url string, params map[s
 	if err != nil {
 		return nil, err
 	}
-	if res.IsError() {
+	if res.IsStatusFailure() {
 		if res.StatusCode() == http.StatusNotFound {
 			return nil, ErrNotFound
 		}
@@ -58,7 +58,7 @@ func Post[T any](ctx context.Context, wc *WebhookClient, url string, body any) (
 	if err != nil {
 		return nil, err
 	}
-	if res.IsError() {
+	if res.IsStatusFailure() {
 		return nil, fmt.Errorf("error response from Rewst: %s [%d]", res.String(), res.StatusCode())
 	}
 	return &target, nil

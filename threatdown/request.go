@@ -21,7 +21,7 @@ func get[T any](ctx context.Context, c *Client, url string, params map[string]st
 		return nil, err
 	}
 
-	if res.IsError() {
+	if res.IsStatusFailure() {
 		if res.StatusCode() == http.StatusNotFound {
 			return nil, ErrNotFound
 		}
@@ -30,7 +30,6 @@ func get[T any](ctx context.Context, c *Client, url string, params map[string]st
 
 	return &target, nil
 }
-
 
 func post[T any](ctx context.Context, c *Client, url string, body any) (*T, error) {
 	var target T
@@ -44,7 +43,7 @@ func post[T any](ctx context.Context, c *Client, url string, body any) (*T, erro
 		return nil, err
 	}
 
-	if res.IsError() {
+	if res.IsStatusFailure() {
 		return nil, fmt.Errorf("error response from Threatdown API: %s [%d]", res.String(), res.StatusCode())
 	}
 
@@ -63,7 +62,7 @@ func put[T any](ctx context.Context, c *Client, url string, body any) (*T, error
 		return nil, err
 	}
 
-	if res.IsError() {
+	if res.IsStatusFailure() {
 		if res.StatusCode() == http.StatusNotFound {
 			return nil, ErrNotFound
 		}
@@ -110,7 +109,7 @@ func del(ctx context.Context, c *Client, url string) error {
 		return err
 	}
 
-	if res.IsError() {
+	if res.IsStatusFailure() {
 		if res.StatusCode() == http.StatusNotFound {
 			return ErrNotFound
 		}

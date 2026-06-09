@@ -47,7 +47,7 @@ func NewClient(ctx context.Context, cfg Config) (*Client, error) {
 	rc := resty.NewWithClient(oauth2.NewClient(ctx, ts))
 	rc.SetHeader("Accept", "application/json")
 	rc.SetRetryCount(3)
-	rc.SetDisableWarn(true)
+	rc.SetLoggerWarnLevel(false)
 
 	return &Client{restClient: rc}, nil
 }

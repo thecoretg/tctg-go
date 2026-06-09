@@ -14,7 +14,7 @@ func NewClient(token string) *Client {
 	c.SetHeader("Content-Type", "application/json")
 	c.SetHeader("Accept", "application/json")
 	c.SetRetryCount(3)
-	c.SetDisableWarn(true)
+	c.SetLoggerWarnLevel(false)
 
 	return &Client{restClient: c}
 }
