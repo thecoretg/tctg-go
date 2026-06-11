@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 )
 
 type queryResp[T any] struct {
@@ -17,8 +18,9 @@ type queryResp[T any] struct {
 var ErrNotFound = errors.New("404 status returned")
 
 // Query executes a SOQL query and returns all records, following nextRecordsUrl
-// pages until Salesforce signals done.
-func Query[T any](ctx context.Context, c *Client, q string) ([]T, error) {
+// pages until Salesforce signals done. If simplify is true, each record's keys
+// are lowercased, __c suffixes are stripped, and the attributes key is dropped.
+func Query[T any](ctx context.Context, c *Client, q string, simplify bool) ([]T, error) {
 	var all []T
 	url := c.endpointURL("query")
 	params := map[string]string{"q": q}
@@ -32,13 +34,33 @@ func Query[T any](ctx context.Context, c *Client, q string) ([]T, error) {
 		all = append(all, result.Records...)
 
 		if result.Done {
-			return all, nil
+			break
 		}
 
-		// subsequent pages use the full nextRecordsUrl path, no query params
 		url = c.baseURL + result.NextRecordsURL
 		params = nil
 	}
+
+	if simplify {
+		for i, record := range all {
+			if m, ok := any(record).(map[string]any); ok {
+				all[i] = any(simplifyRecord(m)).(T)
+			}
+		}
+	}
+
+	return all, nil
+}
+
+func simplifyRecord(m map[string]any) map[string]any {
+	out := make(map[string]any, len(m))
+	for k, v := range m {
+		if k == "attributes" {
+			continue
+		}
+		out[strings.TrimSuffix(strings.ToLower(k), "__c")] = v
+	}
+	return out
 }
 
 func get[T any](ctx context.Context, c *Client, url string, params map[string]string) (*T, error) {

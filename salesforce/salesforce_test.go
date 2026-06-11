@@ -2,7 +2,6 @@ package salesforce
 
 import (
 	"context"
-	"encoding/json"
 	"os"
 	"testing"
 
@@ -23,61 +22,55 @@ func newTestClient(t *testing.T) *Client {
 	return client
 }
 
-func TestQueryAccounts(t *testing.T) {
+func TestQuery(t *testing.T) {
 	c := newTestClient(t)
 
-	accounts, err := c.QueryAccounts(context.Background(), QueryAccountsOpts{
-		Fields: []string{"Phone", "Support_Agreement__c"},
-	})
+	records, err := Query[map[string]any](context.Background(), c,
+		"SELECT Id, Name, Phone, Support_Agreement__c FROM Account",
+		false,
+	)
 	if err != nil {
-		t.Fatalf("QueryAccounts: %v", err)
+		t.Fatalf("Query: %v", err)
 	}
-	t.Logf("got %d accounts", len(accounts))
+	t.Logf("got %d records", len(records))
 }
 
-func TestQueryAccountsWhere(t *testing.T) {
+func TestQuerySimplify(t *testing.T) {
 	c := newTestClient(t)
 
-	accounts, err := c.QueryAccounts(context.Background(), QueryAccountsOpts{
-		Fields: []string{"Phone", "Support_Agreement__c"},
-		Where:  "Type = 'Customer'",
-	})
+	records, err := Query[map[string]any](context.Background(), c,
+		"SELECT Id, Name, Phone, Support_Agreement__c FROM Account WHERE Type = 'Customer'",
+		true,
+	)
 	if err != nil {
-		t.Fatalf("QueryAccounts: %v", err)
+		t.Fatalf("Query: %v", err)
 	}
-	t.Logf("got %d accounts", len(accounts))
+	t.Logf("got %d records", len(records))
 }
 
-func TestAccountUnmarshal(t *testing.T) {
-	data := []byte(`{
-		"attributes": {"type": "Account"},
-		"Id": "001Dp0000056v5LIAQ",
-		"Name": "Acme Corp",
-		"Phone": "(713) 393-6500",
-		"Support_Agreement__c": "Co-Managed IT"
-	}`)
-
-	var a Account
-	if err := json.Unmarshal(data, &a); err != nil {
-		t.Fatalf("unmarshal: %v", err)
+func TestSimplifyRecord(t *testing.T) {
+	input := map[string]any{
+		"attributes":             map[string]any{"type": "Account", "url": "/services/data/v64.0/sobjects/Account/SomeID"},
+		"Id":                     "SomeID",
+		"Name":                   "My Client Name",
+		"Endpoint_Protection__c": nil,
 	}
 
-	if a.ID != "001Dp0000056v5LIAQ" {
-		t.Errorf("ID: got %q, want %q", a.ID, "001Dp0000056v5LIAQ")
+	got := simplifyRecord(input)
+
+	if _, ok := got["attributes"]; ok {
+		t.Error("attributes should be removed")
 	}
-	if a.Name != "Acme Corp" {
-		t.Errorf("Name: got %q, want %q", a.Name, "Acme Corp")
+	if got["id"] != "SomeID" {
+		t.Errorf("id: got %v, want %q", got["id"], "SomeID")
 	}
-	if a.Fields["Phone"] != "(713) 393-6500" {
-		t.Errorf("Fields[Phone]: got %v, want %q", a.Fields["Phone"], "(713) 393-6500")
+	if got["name"] != "My Client Name" {
+		t.Errorf("name: got %v, want %q", got["name"], "My Client Name")
 	}
-	if a.Fields["Support_Agreement__c"] != "Co-Managed IT" {
-		t.Errorf("Fields[Support_Agreement__c]: got %v, want %q", a.Fields["Support_Agreement__c"], "Co-Managed IT")
+	if _, ok := got["endpoint_protection"]; !ok {
+		t.Error("endpoint_protection key missing")
 	}
-	if _, ok := a.Fields["Id"]; ok {
-		t.Error("Fields should not contain Id")
-	}
-	if _, ok := a.Fields["Name"]; ok {
-		t.Error("Fields should not contain Name")
+	if _, ok := got["Endpoint_Protection__c"]; ok {
+		t.Error("original Endpoint_Protection__c key should not be present")
 	}
 }
