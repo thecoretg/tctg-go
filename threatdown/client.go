@@ -3,6 +3,7 @@ package threatdown
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 
 	"golang.org/x/oauth2"
@@ -50,6 +51,13 @@ func NewClient(ctx context.Context, cfg Config) (*Client, error) {
 	rc.SetLoggerWarnLevel(false)
 
 	return &Client{restClient: rc}, nil
+}
+
+func NewClientFromEnv(ctx context.Context) (*Client, error) {
+	return NewClient(ctx, Config{
+		ClientID:     os.Getenv("THREATDOWN_CLIENT_ID"),
+		ClientSecret: os.Getenv("THREATDOWN_CLIENT_SECRET"),
+	})
 }
 
 func endpointURLV1(endpoint string) string {

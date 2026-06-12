@@ -15,7 +15,7 @@ func main() {
 
 	ctx := context.Background()
 
-	data, err := sites.FetchSites(ctx)
+	data, err := sites.FetchSites(ctx, sites.FetchOptions{})
 	if err != nil {
 		log.Fatalf("fetching sites: %v", err)
 	}

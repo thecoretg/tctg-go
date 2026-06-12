@@ -2,82 +2,125 @@ package sites
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"log/slog"
-	"os"
 	"sync"
+
+	"golang.org/x/time/rate"
 
 	"github.com/thecoretg/tctg-go/threatdown"
 )
 
-type FullSite struct {
-	threatdown.Site
-	Subs   []threatdown.SiteSubscription `json:"subs"`
-	AddOns []threatdown.AddOn            `json:"add_ons"`
+const requestsPerMinute = 360
+
+var limiter = rate.NewLimiter(rate.Limit(requestsPerMinute/60.0), 90)
+
+type FetchOptions struct {
+	SkipSubs   bool
+	SkipAddOns bool
 }
 
-func FetchSites(ctx context.Context) ([]FullSite, error) {
-	c, err := createClient(ctx)
+type FullSite struct {
+	threatdown.Site
+	Subs   []threatdown.SiteSubscription `json:"subs,omitempty"`
+	AddOns []threatdown.AddOn            `json:"add_ons,omitempty"`
+}
+
+func FetchSites(ctx context.Context, opts FetchOptions) ([]FullSite, error) {
+	c, err := threatdown.NewClientFromEnv(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("creating threatdown client: %w", err)
 	}
 
-	return fetchAllSites(ctx, c)
+	return fetchAllSites(ctx, c, opts)
 }
 
-func createClient(ctx context.Context) (*threatdown.Client, error) {
-	cfg := threatdown.Config{
-		ClientID:     os.Getenv("THREATDOWN_CLIENT_ID"),
-		ClientSecret: os.Getenv("THREATDOWN_CLIENT_SECRET"),
+type fetchResult struct {
+	site FullSite
+	err  error
+}
+
+func fetchAllSites(ctx context.Context, c *threatdown.Client, opts FetchOptions) ([]FullSite, error) {
+	if err := limiter.Wait(ctx); err != nil {
+		return nil, fmt.Errorf("fetching sites: %w", err)
 	}
 
-	return threatdown.NewClient(ctx, cfg)
-}
-
-func fetchAllSites(ctx context.Context, c *threatdown.Client) ([]FullSite, error) {
 	raw, err := c.ListSites(ctx, true)
 	if err != nil {
 		return nil, fmt.Errorf("fetching sites: %w", err)
 	}
 
 	var wg sync.WaitGroup
-	fullSites := make(chan FullSite, len(raw))
+	results := make(chan fetchResult, len(raw))
 
 	for _, s := range raw {
 		wg.Go(func() {
-			fullSites <- FullSite{
-				Site:   s,
-				Subs:   fetchSubs(ctx, c, s),
-				AddOns: fetchAddOns(ctx, c, s),
+			fs := FullSite{Site: s}
+
+			if !opts.SkipSubs {
+				subs, err := fetchSubs(ctx, c, s)
+				if err != nil {
+					results <- fetchResult{err: fmt.Errorf("site %s (%s): %w", s.ID, s.CompanyName, err)}
+					return
+				}
+				fs.Subs = subs
 			}
+
+			if !opts.SkipAddOns {
+				addOns, err := fetchAddOns(ctx, c, s)
+				if err != nil {
+					results <- fetchResult{err: fmt.Errorf("site %s (%s): %w", s.ID, s.CompanyName, err)}
+					return
+				}
+				fs.AddOns = addOns
+			}
+
+			results <- fetchResult{site: fs}
 		})
 	}
 
 	wg.Wait()
-	close(fullSites)
+	close(results)
 
-	results := make([]FullSite, 0, len(raw))
-	for fs := range fullSites {
-		results = append(results, fs)
+	var errs []error
+	var fullSites []FullSite
+	for r := range results {
+		if r.err != nil {
+			errs = append(errs, r.err)
+		} else {
+			fullSites = append(fullSites, r.site)
+		}
 	}
 
-	return results, nil
+	if len(errs) > 0 {
+		return nil, errors.Join(errs...)
+	}
+
+	return fullSites, nil
 }
 
-func fetchSubs(ctx context.Context, c *threatdown.Client, site threatdown.Site) []threatdown.SiteSubscription {
+func fetchSubs(ctx context.Context, c *threatdown.Client, site threatdown.Site) ([]threatdown.SiteSubscription, error) {
+	if err := limiter.Wait(ctx); err != nil {
+		return nil, fmt.Errorf("rate limiter: %w", err)
+	}
+
 	subs, err := c.GetSiteSubscriptions(ctx, site.ID)
 	if err != nil {
-		slog.Error("getting site subs; returning without subs", "site_id", site.ID, "site_name", site.CompanyName, "error", err)
+		return nil, fmt.Errorf("getting site subs: %w", err)
 	}
 
-	return subs
+	return subs, nil
 }
 
-func fetchAddOns(ctx context.Context, c *threatdown.Client, site threatdown.Site) []threatdown.AddOn {
-	addOns, err := c.ListAddOns(ctx, site.ID)
-	if err != nil {
-		slog.Error("getting site addons; returning without addons", "site_id", site.ID, "site_name", site.CompanyName, "error", err)
+func fetchAddOns(ctx context.Context, c *threatdown.Client, site threatdown.Site) ([]threatdown.AddOn, error) {
+	if err := limiter.Wait(ctx); err != nil {
+		return nil, fmt.Errorf("rate limiter: %w", err)
 	}
 
-	return addOns
+	addOns, err := c.ListAddOns(ctx, site.ID)
+	if err != nil {
+		return nil, fmt.Errorf("getting site add-ons: %w", err)
+	}
+
+	return addOns, nil
 }

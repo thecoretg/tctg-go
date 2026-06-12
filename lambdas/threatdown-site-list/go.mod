@@ -11,6 +11,7 @@ require (
 require (
 	golang.org/x/net v0.55.0 // indirect
 	golang.org/x/oauth2 v0.36.0 // indirect
+	golang.org/x/time v0.15.0 // indirect
 	resty.dev/v3 v3.0.0-rc.1 // indirect
 )
 
