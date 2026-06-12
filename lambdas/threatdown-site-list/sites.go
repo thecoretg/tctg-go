@@ -105,6 +105,9 @@ func fetchSubs(ctx context.Context, c *threatdown.Client, site threatdown.Site) 
 	}
 
 	subs, err := c.GetSiteSubscriptions(ctx, site.ID)
+	if errors.Is(err, threatdown.ErrSubNotFound) {
+		return nil, nil
+	}
 	if err != nil {
 		return nil, fmt.Errorf("getting site subs: %w", err)
 	}
@@ -118,6 +121,9 @@ func fetchAddOns(ctx context.Context, c *threatdown.Client, site threatdown.Site
 	}
 
 	addOns, err := c.ListAddOns(ctx, site.ID)
+	if errors.Is(err, threatdown.ErrNotFound) {
+		return nil, nil
+	}
 	if err != nil {
 		return nil, fmt.Errorf("getting site add-ons: %w", err)
 	}
