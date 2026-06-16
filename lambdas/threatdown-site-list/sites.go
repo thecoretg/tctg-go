@@ -24,6 +24,14 @@ type FullSite struct {
 	threatdown.Site
 	Subs   []threatdown.SiteSubscription `json:"subs,omitempty"`
 	AddOns []threatdown.AddOn            `json:"add_ons,omitempty"`
+	Errors FetchErrors                   `json:"errors"`
+}
+
+// FetchErrors holds non-fatal errors encountered while fetching a site's
+// subscriptions or add-ons. A nil field means that fetch succeeded.
+type FetchErrors struct {
+	SubFetchError   *string `json:"sub_fetch_error"`
+	AddOnFetchError *string `json:"addon_fetch_error"`
 }
 
 func FetchSites(ctx context.Context, opts FetchOptions) ([]FullSite, error) {
@@ -33,11 +41,6 @@ func FetchSites(ctx context.Context, opts FetchOptions) ([]FullSite, error) {
 	}
 
 	return fetchAllSites(ctx, c, opts)
-}
-
-type fetchResult struct {
-	site FullSite
-	err  error
 }
 
 func fetchAllSites(ctx context.Context, c *threatdown.Client, opts FetchOptions) ([]FullSite, error) {
@@ -51,7 +54,7 @@ func fetchAllSites(ctx context.Context, c *threatdown.Client, opts FetchOptions)
 	}
 
 	var wg sync.WaitGroup
-	results := make(chan fetchResult, len(raw))
+	results := make(chan FullSite, len(raw))
 
 	for _, s := range raw {
 		wg.Go(func() {
@@ -60,40 +63,33 @@ func fetchAllSites(ctx context.Context, c *threatdown.Client, opts FetchOptions)
 			if !opts.SkipSubs {
 				subs, err := fetchSubs(ctx, c, s)
 				if err != nil {
-					results <- fetchResult{err: fmt.Errorf("site %s (%s): %w", s.ID, s.CompanyName, err)}
-					return
+					msg := err.Error()
+					fs.Errors.SubFetchError = &msg
+				} else {
+					fs.Subs = subs
 				}
-				fs.Subs = subs
 			}
 
 			if !opts.SkipAddOns {
 				addOns, err := fetchAddOns(ctx, c, s)
 				if err != nil {
-					results <- fetchResult{err: fmt.Errorf("site %s (%s): %w", s.ID, s.CompanyName, err)}
-					return
+					msg := err.Error()
+					fs.Errors.AddOnFetchError = &msg
+				} else {
+					fs.AddOns = addOns
 				}
-				fs.AddOns = addOns
 			}
 
-			results <- fetchResult{site: fs}
+			results <- fs
 		})
 	}
 
 	wg.Wait()
 	close(results)
 
-	var errs []error
 	var fullSites []FullSite
-	for r := range results {
-		if r.err != nil {
-			errs = append(errs, r.err)
-		} else {
-			fullSites = append(fullSites, r.site)
-		}
-	}
-
-	if len(errs) > 0 {
-		return nil, errors.Join(errs...)
+	for fs := range results {
+		fullSites = append(fullSites, fs)
 	}
 
 	return fullSites, nil
