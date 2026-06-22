@@ -26,61 +26,61 @@ func specificNoteEndpoint(ticketID, noteID int) string {
 }
 
 func (c *Client) PostTicket(ctx context.Context, ticket *Ticket) (*Ticket, error) {
-	return Post[Ticket](ctx, c, "service/tickets", ticket)
+	return post[Ticket](ctx, c, "service/tickets", ticket)
 }
 
 func (c *Client) ListTickets(ctx context.Context, params map[string]string) ([]Ticket, error) {
-	return GetMany[Ticket](ctx, c, "service/tickets", params)
+	return getMany[Ticket](ctx, c, "service/tickets", params)
 }
 
 func (c *Client) GetTicket(ctx context.Context, ticketID int, params map[string]string) (*Ticket, error) {
-	return GetOne[Ticket](ctx, c, ticketIDEndpoint(ticketID), params)
+	return get[Ticket](ctx, c, ticketIDEndpoint(ticketID), params)
 }
 
 func (c *Client) PutTicket(ctx context.Context, ticketID int, ticket *Ticket) (*Ticket, error) {
-	return Put[Ticket](ctx, c, ticketIDEndpoint(ticketID), ticket)
+	return put[Ticket](ctx, c, ticketIDEndpoint(ticketID), ticket)
 }
 
 func (c *Client) PatchTicket(ctx context.Context, ticketID int, patchOps []PatchOp) (*Ticket, error) {
-	return Patch[Ticket](ctx, c, ticketIDEndpoint(ticketID), patchOps)
+	return patch[Ticket](ctx, c, ticketIDEndpoint(ticketID), patchOps)
 }
 
 func (c *Client) DeleteTicket(ctx context.Context, ticketID int) error {
-	return Delete(ctx, c, ticketIDEndpoint(ticketID))
+	return del(ctx, c, ticketIDEndpoint(ticketID))
 }
 
 // ListServiceTicketNotesAll gets all ticket notes, regardless of if they have a time entry.
 //
 // This is most likely the one you want to use unless you consistently uncheck the time entry box.
 func (c *Client) ListServiceTicketNotesAll(ctx context.Context, params map[string]string, ticketID int) ([]ServiceTicketNoteAll, error) {
-	return GetMany[ServiceTicketNoteAll](ctx, c, allNotesEndpoint(ticketID), params)
+	return getMany[ServiceTicketNoteAll](ctx, c, allNotesEndpoint(ticketID), params)
 }
 
 func (c *Client) PostServiceTicketNote(ctx context.Context, ticketNote *ServiceTicketNote, ticketID int) (*ServiceTicketNote, error) {
-	return Post[ServiceTicketNote](ctx, c, notesEndpoint(ticketID), ticketNote)
+	return post[ServiceTicketNote](ctx, c, notesEndpoint(ticketID), ticketNote)
 }
 
 // ListServiceTicketNotes gets all notes that are not time entry.
 //
 // Not recommended since you will probably get what you need through ListServiceTicketNotesAll.
 func (c *Client) ListServiceTicketNotes(ctx context.Context, params map[string]string, ticketID int) ([]ServiceTicketNote, error) {
-	return GetMany[ServiceTicketNote](ctx, c, notesEndpoint(ticketID), params)
+	return getMany[ServiceTicketNote](ctx, c, notesEndpoint(ticketID), params)
 }
 
 func (c *Client) GetServiceTicketNote(ctx context.Context, noteID int, params map[string]string, ticketID int) (*ServiceTicketNote, error) {
-	return GetOne[ServiceTicketNote](ctx, c, specificNoteEndpoint(ticketID, noteID), params)
+	return get[ServiceTicketNote](ctx, c, specificNoteEndpoint(ticketID, noteID), params)
 }
 
 func (c *Client) PutServiceTicketNote(ctx context.Context, noteID int, ticketNote *ServiceTicketNote, ticketID int) (*ServiceTicketNote, error) {
-	return Put[ServiceTicketNote](ctx, c, specificNoteEndpoint(ticketID, noteID), ticketNote)
+	return put[ServiceTicketNote](ctx, c, specificNoteEndpoint(ticketID, noteID), ticketNote)
 }
 
 func (c *Client) PatchServiceTicketNote(ctx context.Context, noteID int, patchOps []PatchOp, ticketID int) (*ServiceTicketNote, error) {
-	return Patch[ServiceTicketNote](ctx, c, specificNoteEndpoint(ticketID, noteID), patchOps)
+	return patch[ServiceTicketNote](ctx, c, specificNoteEndpoint(ticketID, noteID), patchOps)
 }
 
 func (c *Client) DeleteServiceTicketNote(ctx context.Context, noteID int, ticketID int) error {
-	return Delete(ctx, c, specificNoteEndpoint(ticketID, noteID))
+	return del(ctx, c, specificNoteEndpoint(ticketID, noteID))
 }
 
 func (c *Client) GetMostRecentTicketNote(ctx context.Context, ticketID int) (*ServiceTicketNote, error) {

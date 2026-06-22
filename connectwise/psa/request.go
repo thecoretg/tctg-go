@@ -1,4 +1,4 @@
-package webex
+package psa
 
 import (
 	"context"
@@ -9,12 +9,12 @@ import (
 )
 
 const (
-	baseURL = "https://webexapis.com/v1"
+	baseURL = "https://api-na.myconnectwise.net/v4_6_release/apis/3.0"
 )
 
-var ErrNotFound = errors.New("404 status received")
+var ErrNotFound = errors.New("404 status returned")
 
-func GetOne[T any](ctx context.Context, c *Client, endpoint string, params map[string]string) (*T, error) {
+func get[T any](ctx context.Context, c *Client, endpoint string, params map[string]string) (*T, error) {
 	var target T
 	res, err := c.restClient.R().
 		SetContext(ctx).
@@ -29,13 +29,13 @@ func GetOne[T any](ctx context.Context, c *Client, endpoint string, params map[s
 		if res.StatusCode() == http.StatusNotFound {
 			return nil, ErrNotFound
 		}
-		return nil, fmt.Errorf("error response from Webex API: %s", res.String())
+		return nil, fmt.Errorf("error response from ConnectWise API: %s", res.String())
 	}
 
 	return &target, nil
 }
 
-func GetMany[T any](ctx context.Context, c *Client, endpoint string, params map[string]string) ([]T, error) {
+func getMany[T any](ctx context.Context, c *Client, endpoint string, params map[string]string) ([]T, error) {
 	var allItems []T
 
 	endpoint = fullURL(baseURL, endpoint)
@@ -54,7 +54,7 @@ func GetMany[T any](ctx context.Context, c *Client, endpoint string, params map[
 			if res.StatusCode() == http.StatusNotFound {
 				return nil, ErrNotFound
 			}
-			return nil, fmt.Errorf("error response from Webex API: %s", res.String())
+			return nil, fmt.Errorf("error response from ConnectWise API: %s", res.String())
 		}
 
 		allItems = append(allItems, target...)
@@ -65,7 +65,7 @@ func GetMany[T any](ctx context.Context, c *Client, endpoint string, params map[
 	return allItems, nil
 }
 
-func Post[T any](ctx context.Context, c *Client, endpoint string, body any) (*T, error) {
+func post[T any](ctx context.Context, c *Client, endpoint string, body any) (*T, error) {
 	var target T
 	res, err := c.restClient.R().
 		SetContext(ctx).
@@ -77,13 +77,13 @@ func Post[T any](ctx context.Context, c *Client, endpoint string, body any) (*T,
 	}
 
 	if res.IsStatusFailure() {
-		return nil, fmt.Errorf("error response from Webex API: %s", res.String())
+		return nil, fmt.Errorf("error response from ConnectWise API: %s", res.String())
 	}
 
 	return &target, nil
 }
 
-func Put[T any](ctx context.Context, c *Client, endpoint string, body any) (*T, error) {
+func put[T any](ctx context.Context, c *Client, endpoint string, body any) (*T, error) {
 	var target T
 	res, err := c.restClient.R().
 		SetContext(ctx).
@@ -98,13 +98,31 @@ func Put[T any](ctx context.Context, c *Client, endpoint string, body any) (*T, 
 		if res.StatusCode() == http.StatusNotFound {
 			return nil, ErrNotFound
 		}
-		return nil, fmt.Errorf("error response from Webex API: %s", res.String())
+		return nil, fmt.Errorf("error response from ConnectWise API: %s", res.String())
 	}
 
 	return &target, nil
 }
 
-func Delete(ctx context.Context, c *Client, endpoint string) error {
+func patch[T any](ctx context.Context, c *Client, endpoint string, patchOps []PatchOp) (*T, error) {
+	var target T
+	res, err := c.restClient.R().
+		SetContext(ctx).
+		SetBody(patchOps).
+		SetResult(&target).
+		Patch(fullURL(baseURL, endpoint))
+	if err != nil {
+		return nil, err
+	}
+
+	if res.IsStatusFailure() {
+		return nil, fmt.Errorf("error response from ConnectWise API: %s", res.String())
+	}
+
+	return &target, nil
+}
+
+func del(ctx context.Context, c *Client, endpoint string) error {
 	res, err := c.restClient.R().
 		SetContext(ctx).
 		Delete(fullURL(baseURL, endpoint))
@@ -116,7 +134,7 @@ func Delete(ctx context.Context, c *Client, endpoint string) error {
 		if res.StatusCode() == http.StatusNotFound {
 			return ErrNotFound
 		}
-		return fmt.Errorf("error response from Webex API: %s", res.String())
+		return fmt.Errorf("error response from ConnectWise API: %s", res.String())
 	}
 
 	return nil

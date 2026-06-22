@@ -14,13 +14,13 @@ func NewMessageToRoom(roomID, roomName, text string) Message {
 }
 
 func (c *Client) GetMessage(ctx context.Context, messageID string, params map[string]string) (*Message, error) {
-	return GetOne[Message](ctx, c, fmt.Sprintf("messages/%s", messageID), params)
+	return get[Message](ctx, c, fmt.Sprintf("messages/%s", messageID), params)
 }
 
 func (c *Client) PostMessage(ctx context.Context, message *Message) (*Message, error) {
-	return Post[Message](ctx, c, "messages", message)
+	return post[Message](ctx, c, "messages", message)
 }
 
 func (c *Client) GetAttachmentAction(ctx context.Context, messageID string) (*AttachmentAction, error) {
-	return GetOne[AttachmentAction](ctx, c, fmt.Sprintf("attachment/actions/%s", messageID), nil)
+	return get[AttachmentAction](ctx, c, fmt.Sprintf("attachment/actions/%s", messageID), nil)
 }

@@ -10,7 +10,7 @@ func (c *Client) ListPeople(ctx context.Context, email string) ([]Person, error)
 		"email": email,
 	}
 
-	resp, err := GetOne[ListPeopleResp](ctx, c, "people", params)
+	resp, err := get[ListPeopleResp](ctx, c, "people", params)
 	if err != nil {
 		return nil, fmt.Errorf("listing people: %w", err)
 	}
