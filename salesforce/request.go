@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+
+	"github.com/thecoretg/tctg-go/internal/httpx"
 )
 
 type queryResp[T any] struct {
@@ -64,22 +66,21 @@ func simplifyRecord(m map[string]any) map[string]any {
 }
 
 func get[T any](ctx context.Context, c *Client, url string, params map[string]string) (*T, error) {
-	var target T
-	res, err := c.restClient.R().
-		SetContext(ctx).
-		SetQueryParams(params).
-		SetResult(&target).
-		Get(url)
+	res, err := httpx.Do(ctx, c.httpClient, http.MethodGet, url, params, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	if res.IsStatusFailure() {
-		if res.StatusCode() == http.StatusNotFound {
+	if res.StatusCode >= 400 {
+		if res.StatusCode == http.StatusNotFound {
 			return nil, ErrNotFound
 		}
-		return nil, fmt.Errorf("error response from Salesforce: %s [%d]", res.String(), res.StatusCode())
+		return nil, fmt.Errorf("error response from Salesforce: %s [%d]", res.Body, res.StatusCode)
 	}
 
+	var target T
+	if err := httpx.DecodeJSON(res.Body, &target); err != nil {
+		return nil, err
+	}
 	return &target, nil
 }

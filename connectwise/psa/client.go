@@ -2,11 +2,13 @@ package psa
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
+	"net/http"
 	"os"
 	"strings"
 
-	"resty.dev/v3"
+	"github.com/thecoretg/tctg-go/internal/httpx"
 )
 
 type Config struct {
@@ -17,7 +19,7 @@ type Config struct {
 }
 
 type Client struct {
-	restClient *resty.Client
+	httpClient *http.Client
 }
 
 // NewClient builds a ConnectWise PSA client from cfg. The ctx parameter is
@@ -41,15 +43,16 @@ func NewClient(_ context.Context, cfg Config) (*Client, error) {
 		return nil, fmt.Errorf("missing psa config fields: %s", strings.Join(missing, ", "))
 	}
 
-	c := resty.New()
-	c.SetBasicAuth(fmt.Sprintf("%s+%s", cfg.CompanyID, cfg.PublicKey), cfg.PrivateKey)
-	c.SetHeader("Content-Type", "application/json")
-	c.SetHeader("Accept", "application/json")
-	c.SetHeader("clientId", cfg.ClientID)
-	c.SetRetryCount(3)
-	c.SetLoggerWarnLevel(false)
+	user := fmt.Sprintf("%s+%s", cfg.CompanyID, cfg.PublicKey)
+	auth := base64.StdEncoding.EncodeToString([]byte(user + ":" + cfg.PrivateKey))
+	headers := map[string]string{
+		"Authorization": "Basic " + auth,
+		"Content-Type":  "application/json",
+		"Accept":        "application/json",
+		"clientId":      cfg.ClientID,
+	}
 
-	return &Client{restClient: c}, nil
+	return &Client{httpClient: httpx.NewClient(nil, headers, 3)}, nil
 }
 
 func NewClientFromEnv(ctx context.Context) (*Client, error) {

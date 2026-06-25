@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+
+	"github.com/thecoretg/tctg-go/internal/httpx"
 )
 
 const (
@@ -15,23 +17,22 @@ const (
 var ErrNotFound = errors.New("404 status returned")
 
 func get[T any](ctx context.Context, c *Client, endpoint string, params map[string]string) (*T, error) {
-	var target T
-	res, err := c.restClient.R().
-		SetContext(ctx).
-		SetQueryParams(params).
-		SetResult(&target).
-		Get(fullURL(baseURL, endpoint))
+	res, err := httpx.Do(ctx, c.httpClient, http.MethodGet, fullURL(baseURL, endpoint), params, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	if res.IsStatusFailure() {
-		if res.StatusCode() == http.StatusNotFound {
+	if res.StatusCode >= 400 {
+		if res.StatusCode == http.StatusNotFound {
 			return nil, ErrNotFound
 		}
-		return nil, fmt.Errorf("error response from ConnectWise API: %s", res.String())
+		return nil, fmt.Errorf("error response from ConnectWise API: %s", res.Body)
 	}
 
+	var target T
+	if err := httpx.DecodeJSON(res.Body, &target); err != nil {
+		return nil, err
+	}
 	return &target, nil
 }
 
@@ -40,101 +41,96 @@ func getMany[T any](ctx context.Context, c *Client, endpoint string, params map[
 
 	endpoint = fullURL(baseURL, endpoint)
 	for endpoint != "" {
-		var target []T
-		res, err := c.restClient.R().
-			SetContext(ctx).
-			SetQueryParams(params).
-			SetResult(&target).
-			Get(endpoint)
+		res, err := httpx.Do(ctx, c.httpClient, http.MethodGet, endpoint, params, nil)
 		if err != nil {
 			return nil, err
 		}
 
-		if res.IsStatusFailure() {
-			if res.StatusCode() == http.StatusNotFound {
+		if res.StatusCode >= 400 {
+			if res.StatusCode == http.StatusNotFound {
 				return nil, ErrNotFound
 			}
-			return nil, fmt.Errorf("error response from ConnectWise API: %s", res.String())
+			return nil, fmt.Errorf("error response from ConnectWise API: %s", res.Body)
+		}
+
+		var target []T
+		if err := httpx.DecodeJSON(res.Body, &target); err != nil {
+			return nil, err
 		}
 
 		allItems = append(allItems, target...)
 		params = nil
-		endpoint = parseLinkHeader(res.Header().Get("Link"), "next")
+		endpoint = parseLinkHeader(res.Header.Get("Link"), "next")
 	}
 
 	return allItems, nil
 }
 
 func post[T any](ctx context.Context, c *Client, endpoint string, body any) (*T, error) {
-	var target T
-	res, err := c.restClient.R().
-		SetContext(ctx).
-		SetBody(body).
-		SetResult(&target).
-		Post(fullURL(baseURL, endpoint))
+	res, err := httpx.Do(ctx, c.httpClient, http.MethodPost, fullURL(baseURL, endpoint), nil, body)
 	if err != nil {
 		return nil, err
 	}
 
-	if res.IsStatusFailure() {
-		return nil, fmt.Errorf("error response from ConnectWise API: %s", res.String())
+	if res.StatusCode >= 400 {
+		return nil, fmt.Errorf("error response from ConnectWise API: %s", res.Body)
 	}
 
+	var target T
+	if err := httpx.DecodeJSON(res.Body, &target); err != nil {
+		return nil, err
+	}
 	return &target, nil
 }
 
 func put[T any](ctx context.Context, c *Client, endpoint string, body any) (*T, error) {
-	var target T
-	res, err := c.restClient.R().
-		SetContext(ctx).
-		SetBody(body).
-		SetResult(&target).
-		Put(fullURL(baseURL, endpoint))
+	res, err := httpx.Do(ctx, c.httpClient, http.MethodPut, fullURL(baseURL, endpoint), nil, body)
 	if err != nil {
 		return nil, err
 	}
 
-	if res.IsStatusFailure() {
-		if res.StatusCode() == http.StatusNotFound {
+	if res.StatusCode >= 400 {
+		if res.StatusCode == http.StatusNotFound {
 			return nil, ErrNotFound
 		}
-		return nil, fmt.Errorf("error response from ConnectWise API: %s", res.String())
+		return nil, fmt.Errorf("error response from ConnectWise API: %s", res.Body)
 	}
 
+	var target T
+	if err := httpx.DecodeJSON(res.Body, &target); err != nil {
+		return nil, err
+	}
 	return &target, nil
 }
 
 func patch[T any](ctx context.Context, c *Client, endpoint string, patchOps []PatchOp) (*T, error) {
-	var target T
-	res, err := c.restClient.R().
-		SetContext(ctx).
-		SetBody(patchOps).
-		SetResult(&target).
-		Patch(fullURL(baseURL, endpoint))
+	res, err := httpx.Do(ctx, c.httpClient, http.MethodPatch, fullURL(baseURL, endpoint), nil, patchOps)
 	if err != nil {
 		return nil, err
 	}
 
-	if res.IsStatusFailure() {
-		return nil, fmt.Errorf("error response from ConnectWise API: %s", res.String())
+	if res.StatusCode >= 400 {
+		return nil, fmt.Errorf("error response from ConnectWise API: %s", res.Body)
 	}
 
+	var target T
+	if err := httpx.DecodeJSON(res.Body, &target); err != nil {
+		return nil, err
+	}
 	return &target, nil
 }
 
 func del(ctx context.Context, c *Client, endpoint string) error {
-	res, err := c.restClient.R().
-		SetContext(ctx).
-		Delete(fullURL(baseURL, endpoint))
+	res, err := httpx.Do(ctx, c.httpClient, http.MethodDelete, fullURL(baseURL, endpoint), nil, nil)
 	if err != nil {
 		return err
 	}
 
-	if res.IsStatusFailure() {
-		if res.StatusCode() == http.StatusNotFound {
+	if res.StatusCode >= 400 {
+		if res.StatusCode == http.StatusNotFound {
 			return ErrNotFound
 		}
-		return fmt.Errorf("error response from ConnectWise API: %s", res.String())
+		return fmt.Errorf("error response from ConnectWise API: %s", res.Body)
 	}
 
 	return nil

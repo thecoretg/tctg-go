@@ -2,8 +2,9 @@ package iru
 
 import (
 	"fmt"
+	"net/http"
 
-	"resty.dev/v3"
+	"github.com/thecoretg/tctg-go/internal/httpx"
 )
 
 type (
@@ -13,20 +14,20 @@ type (
 	}
 
 	Client struct {
-		restyClient *resty.Client
+		httpClient *http.Client
+		baseURL    string
 	}
 )
 
 func NewClient(cfg Config) *Client {
-	rc := resty.New()
-	rc.SetHeader("Accept", "application/json")
-	rc.SetAuthToken(cfg.APIKey)
-	rc.SetRetryCount(3)
-	rc.SetLoggerWarnLevel(false)
-	rc.SetBaseURL(baseURL(cfg.Subdomain))
+	headers := map[string]string{
+		"Accept":        "application/json",
+		"Authorization": "Bearer " + cfg.APIKey,
+	}
 
 	return &Client{
-		restyClient: rc,
+		httpClient: httpx.NewClient(nil, headers, 3),
+		baseURL:    baseURL(cfg.Subdomain),
 	}
 }
 

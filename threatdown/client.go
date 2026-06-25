@@ -6,9 +6,12 @@ import (
 	"os"
 	"strings"
 
+	"net/http"
+
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/clientcredentials"
-	"resty.dev/v3"
+
+	"github.com/thecoretg/tctg-go/internal/httpx"
 )
 
 const (
@@ -23,7 +26,7 @@ type Config struct {
 }
 
 type Client struct {
-	restClient *resty.Client
+	httpClient *http.Client
 }
 
 func NewClient(ctx context.Context, cfg Config) (*Client, error) {
@@ -45,12 +48,10 @@ func NewClient(ctx context.Context, cfg Config) (*Client, error) {
 		Scopes:       []string{"read", "write"},
 	}).TokenSource(ctx)
 
-	rc := resty.NewWithClient(oauth2.NewClient(ctx, ts))
-	rc.SetHeader("Accept", "application/json")
-	rc.SetRetryCount(3)
-	rc.SetLoggerWarnLevel(false)
+	oauthClient := oauth2.NewClient(ctx, ts)
+	hc := httpx.NewClient(oauthClient.Transport, map[string]string{"Accept": "application/json"}, 3)
 
-	return &Client{restClient: rc}, nil
+	return &Client{httpClient: hc}, nil
 }
 
 func NewClientFromEnv(ctx context.Context) (*Client, error) {

@@ -3,10 +3,11 @@ package webex
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"os"
 	"strings"
 
-	"resty.dev/v3"
+	"github.com/thecoretg/tctg-go/internal/httpx"
 )
 
 type Config struct {
@@ -14,7 +15,7 @@ type Config struct {
 }
 
 type Client struct {
-	restClient *resty.Client
+	httpClient *http.Client
 }
 
 // NewClient builds a Webex client from cfg. The ctx parameter is accepted for
@@ -29,14 +30,13 @@ func NewClient(_ context.Context, cfg Config) (*Client, error) {
 		return nil, fmt.Errorf("missing webex config fields: %s", strings.Join(missing, ", "))
 	}
 
-	c := resty.New()
-	c.SetAuthToken(cfg.Token)
-	c.SetHeader("Content-Type", "application/json")
-	c.SetHeader("Accept", "application/json")
-	c.SetRetryCount(3)
-	c.SetLoggerWarnLevel(false)
+	headers := map[string]string{
+		"Authorization": "Bearer " + cfg.Token,
+		"Content-Type":  "application/json",
+		"Accept":        "application/json",
+	}
 
-	return &Client{restClient: c}, nil
+	return &Client{httpClient: httpx.NewClient(nil, headers, 3)}, nil
 }
 
 func NewClientFromEnv(ctx context.Context) (*Client, error) {
