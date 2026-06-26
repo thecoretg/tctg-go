@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"time"
 )
 
 // TokenCredentials is the body POSTed to /cwa/api/v1/apitoken
@@ -18,15 +17,15 @@ type TokenCredentials struct {
 // TokenResult is the response from the apitoken endpoints
 // (Automate.Api.Domain.Contracts.Security.TokenResult).
 type TokenResult struct {
-	AccessToken                 string    `json:"AccessToken"`
-	TokenType                   string    `json:"TokenType"`
-	ExpirationDate              time.Time `json:"ExpirationDate,omitzero"`
-	AbsoluteExpirationDate      time.Time `json:"AbsoluteExpirationDate,omitzero"`
-	UserId                      string    `json:"UserId"`
-	InternalUserName            string    `json:"InternalUserName"`
-	IsTwoFactorRequired         bool      `json:"IsTwoFactorRequired"`
-	IsInternalTwoFactorRequired bool      `json:"IsInternalTwoFactorRequired"`
-	SSOAccessToken              string    `json:"SSOAccessToken"`
+	AccessToken                 string `json:"AccessToken"`
+	TokenType                   string `json:"TokenType"`
+	ExpirationDate              Time   `json:"ExpirationDate,omitzero"`
+	AbsoluteExpirationDate      Time   `json:"AbsoluteExpirationDate,omitzero"`
+	UserId                      string `json:"UserId"`
+	InternalUserName            string `json:"InternalUserName"`
+	IsTwoFactorRequired         bool   `json:"IsTwoFactorRequired"`
+	IsInternalTwoFactorRequired bool   `json:"IsInternalTwoFactorRequired"`
+	SSOAccessToken              string `json:"SSOAccessToken"`
 }
 
 // authTransport injects the Automate auth headers on every request: the static
