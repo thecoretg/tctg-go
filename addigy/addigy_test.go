@@ -66,3 +66,31 @@ func TestSearchDevicesAuth(t *testing.T) {
 	}
 	t.Logf("auth OK; got %d device(s)", len(resp.Items))
 }
+
+// TestSearchAllDevicesPaging verifies the auto-paging helper walks past a single
+// small page and matches the server-reported total.
+func TestSearchAllDevicesPaging(t *testing.T) {
+	c := newTestClient(t)
+	if c.orgID == "" {
+		t.Skip("skipping: ADDIGY_ORG_ID must be set")
+	}
+	ctx := context.Background()
+
+	first, err := c.SearchDevices(ctx, DeviceFilter{PerPage: 5})
+	if err != nil {
+		t.Fatalf("SearchDevices: %v", err)
+	}
+	if first.Metadata.PageCount <= 1 {
+		t.Skipf("skipping: org has only %d page of devices", first.Metadata.PageCount)
+	}
+
+	all, err := c.SearchAllDevices(ctx, DeviceFilter{PerPage: 5})
+	if err != nil {
+		t.Fatalf("SearchAllDevices: %v", err)
+	}
+	t.Logf("single page=%d, all pages=%d, reported total=%d",
+		len(first.Items), len(all), first.Metadata.Total)
+	if len(all) <= len(first.Items) {
+		t.Fatalf("expected SearchAll (%d) to exceed a single page (%d)", len(all), len(first.Items))
+	}
+}

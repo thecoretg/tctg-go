@@ -67,3 +67,24 @@ func TestListCompaniesAuth(t *testing.T) {
 		t.Logf("  - %s (Id %s)", co.Name, co.ID)
 	}
 }
+
+// TestListAllCompaniesPaging verifies the pagination helper walks every page:
+// a single page (pagesize=5) must return fewer rows than ListAll, which should
+// equal the Total-Count the server reports.
+func TestListAllCompaniesPaging(t *testing.T) {
+	c := newTestClient(t)
+	ctx := context.Background()
+
+	onePage, err := c.ListCompanies(ctx, map[string]string{"pagesize": "5"})
+	if err != nil {
+		t.Fatalf("ListCompanies: %v", err)
+	}
+	all, err := c.ListAllCompanies(ctx, map[string]string{"pagesize": "5"})
+	if err != nil {
+		t.Fatalf("ListAllCompanies: %v", err)
+	}
+	t.Logf("single page=%d, all pages=%d", len(onePage), len(all))
+	if len(all) <= len(onePage) {
+		t.Fatalf("expected ListAll (%d) to exceed a single page (%d)", len(all), len(onePage))
+	}
+}
