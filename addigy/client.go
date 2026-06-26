@@ -19,8 +19,9 @@ import (
 )
 
 // baseURL is the Addigy API v2 root. The Swagger spec declares only the
-// basePath (/api/v2); this is Addigy's documented v2 host.
-const baseURL = "https://app.addigy.com/api/v2"
+// basePath (/api/v2); the v2 API is served from the api.addigy.com host (the
+// app.addigy.com host returns 401 "Missing auth_token").
+const baseURL = "https://api.addigy.com/api/v2"
 
 type Config struct {
 	APIKey string
