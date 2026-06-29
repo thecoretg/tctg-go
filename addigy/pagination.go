@@ -49,3 +49,16 @@ func (c *Client) QueryAllCustomFacts(ctx context.Context, req FactQuery) ([]Fact
 		return resp.Items, resp.Metadata, nil
 	})
 }
+
+// QueryAllVariables runs QueryVariables across every page and returns all
+// matching variables. The request's Page field sets the starting page.
+func (c *Client) QueryAllVariables(ctx context.Context, req VariablesQueryRequest) ([]Variable, error) {
+	return collectPaged(req.Page, func(page int) ([]Variable, Metadata, error) {
+		req.Page = page
+		resp, err := c.QueryVariables(ctx, req)
+		if err != nil {
+			return nil, Metadata{}, err
+		}
+		return resp.Items, resp.Metadata, nil
+	})
+}
