@@ -13,6 +13,18 @@ func companyTypeIDEndpoint(typeID int) string {
 	return fmt.Sprintf("company/companies/types/%d", typeID)
 }
 
+func companyTypeAssociationEndpoint(companyID int) string {
+	return fmt.Sprintf("%s/typeAssociations", companyIDEndpoint(companyID))
+}
+
+func companyTypeAssociationIDEndpoint(companyID, associationID int) string {
+	return fmt.Sprintf("%s/%d", companyTypeAssociationEndpoint(companyID), associationID)
+}
+
+func companyTypeAssociationsIDEndpoint(associationID int) string {
+	return fmt.Sprintf("company/companyTypeAssociations/%d", associationID)
+}
+
 func (c *Client) PostCompany(ctx context.Context, company *Company) (*Company, error) {
 	return post[Company](ctx, c, "company/companies", company)
 }
@@ -59,4 +71,52 @@ func (c *Client) PatchCompanyType(ctx context.Context, typeID int, patchOps []Pa
 
 func (c *Client) DeleteCompanyType(ctx context.Context, typeID int) error {
 	return del(ctx, c, companyTypeIDEndpoint(typeID))
+}
+
+func (c *Client) PostCompanyTypeAssociation(ctx context.Context, association *CompanyTypeAssociation) (*CompanyTypeAssociation, error) {
+	return post[CompanyTypeAssociation](ctx, c, "company/companyTypeAssociations", association)
+}
+
+func (c *Client) ListCompanyTypeAssociations(ctx context.Context, params map[string]string) ([]CompanyTypeAssociation, error) {
+	return getMany[CompanyTypeAssociation](ctx, c, "company/companyTypeAssociations", params)
+}
+
+func (c *Client) GetCompanyTypeAssociation(ctx context.Context, associationID int, params map[string]string) (*CompanyTypeAssociation, error) {
+	return get[CompanyTypeAssociation](ctx, c, companyTypeAssociationsIDEndpoint(associationID), params)
+}
+
+func (c *Client) PutCompanyTypeAssociation(ctx context.Context, associationID int, association *CompanyTypeAssociation) (*CompanyTypeAssociation, error) {
+	return put[CompanyTypeAssociation](ctx, c, companyTypeAssociationsIDEndpoint(associationID), association)
+}
+
+func (c *Client) PatchCompanyTypeAssociation(ctx context.Context, associationID int, patchOps []PatchOp) (*CompanyTypeAssociation, error) {
+	return patch[CompanyTypeAssociation](ctx, c, companyTypeAssociationsIDEndpoint(associationID), patchOps)
+}
+
+func (c *Client) DeleteCompanyTypeAssociation(ctx context.Context, associationID int) error {
+	return del(ctx, c, companyTypeAssociationsIDEndpoint(associationID))
+}
+
+func (c *Client) PostCompanyTypeAssociationForCompany(ctx context.Context, association *CompanyTypeAssociation, companyID int) (*CompanyTypeAssociation, error) {
+	return post[CompanyTypeAssociation](ctx, c, companyTypeAssociationEndpoint(companyID), association)
+}
+
+func (c *Client) ListCompanyTypeAssociationsForCompany(ctx context.Context, params map[string]string, companyID int) ([]CompanyTypeAssociation, error) {
+	return getMany[CompanyTypeAssociation](ctx, c, companyTypeAssociationEndpoint(companyID), params)
+}
+
+func (c *Client) GetCompanyTypeAssociationForCompany(ctx context.Context, associationID int, params map[string]string, companyID int) (*CompanyTypeAssociation, error) {
+	return get[CompanyTypeAssociation](ctx, c, companyTypeAssociationIDEndpoint(companyID, associationID), params)
+}
+
+func (c *Client) PutCompanyTypeAssociationForCompany(ctx context.Context, associationID int, association *CompanyTypeAssociation, companyID int) (*CompanyTypeAssociation, error) {
+	return put[CompanyTypeAssociation](ctx, c, companyTypeAssociationIDEndpoint(companyID, associationID), association)
+}
+
+func (c *Client) PatchCompanyTypeAssociationForCompany(ctx context.Context, associationID int, patchOps []PatchOp, companyID int) (*CompanyTypeAssociation, error) {
+	return patch[CompanyTypeAssociation](ctx, c, companyTypeAssociationIDEndpoint(companyID, associationID), patchOps)
+}
+
+func (c *Client) DeleteCompanyTypeAssociationForCompany(ctx context.Context, associationID int, companyID int) error {
+	return del(ctx, c, companyTypeAssociationIDEndpoint(companyID, associationID))
 }

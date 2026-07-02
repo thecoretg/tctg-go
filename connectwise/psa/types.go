@@ -487,6 +487,22 @@ type CompanyType struct {
 	ConnectWiseID       string `json:"connectWiseId,omitempty"`
 }
 
+type CompanyTypeAssociation struct {
+	Info any `json:"_info,omitempty"`
+	ID   int `json:"id,omitempty"`
+	Type struct {
+		Info any    `json:"_info,omitempty"`
+		ID   int    `json:"id,omitempty"`
+		Name string `json:"name,omitempty"`
+	} `json:"type,omitzero"`
+	Company struct {
+		Info       any    `json:"_info,omitempty"`
+		ID         int    `json:"id,omitempty"`
+		Identifier string `json:"identifier,omitempty"`
+		Name       string `json:"name,omitempty"`
+	} `json:"company,omitzero"`
+}
+
 type Contact struct {
 	Info             any    `json:"_info,omitempty"`
 	AddressLine1     string `json:"addressLine1,omitempty"`
