@@ -20,6 +20,10 @@ import (
 const (
 	tokenURL = "https://api.umbrella.com/auth/v2/token"
 	baseURL  = "https://api.umbrella.com/admin/v2"
+	// deploymentsBaseURL is the base for the deployments APIs (policies,
+	// roaming computers), which live under a different path than the
+	// providers/admin endpoints.
+	deploymentsBaseURL = "https://api.umbrella.com/deployments/v2"
 )
 
 type Config struct {
@@ -67,4 +71,8 @@ func NewClientFromEnv(ctx context.Context) (*Client, error) {
 
 func endpointURL(path string) string {
 	return fmt.Sprintf("%s/%s", baseURL, path)
+}
+
+func deploymentsURL(path string) string {
+	return fmt.Sprintf("%s/%s", deploymentsBaseURL, path)
 }

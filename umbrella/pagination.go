@@ -2,6 +2,7 @@ package umbrella
 
 import (
 	"context"
+	"maps"
 	"strconv"
 )
 
@@ -50,5 +51,35 @@ func (c *Client) ListAllCustomerAddresses(ctx context.Context) ([]CustomerAddres
 			"page":  strconv.Itoa(page),
 			"limit": strconv.Itoa(limit),
 		})
+	})
+}
+
+// ListAllPolicies fetches every page of ListPolicies and returns all policies.
+// policyType filters by "dns" or "web"; pass "" to use the API default (dns).
+func (c *Client) ListAllPolicies(ctx context.Context, policyType string) ([]Policy, error) {
+	return collectPaged(1, defaultPageLimit, func(page, limit int) ([]Policy, error) {
+		params := map[string]string{
+			"page":  strconv.Itoa(page),
+			"limit": strconv.Itoa(limit),
+		}
+		if policyType != "" {
+			params["type"] = policyType
+		}
+		return c.ListPolicies(ctx, params)
+	})
+}
+
+// ListAllRoamingComputers fetches every page of ListRoamingComputers and
+// returns all roaming computers. filters is merged into each page request and
+// may contain any of the ListRoamingComputers filter params ("name", "status",
+// "swgStatus", "lastSyncBefore", "lastSyncAfter"); pass nil for none.
+func (c *Client) ListAllRoamingComputers(ctx context.Context, filters map[string]string) ([]RoamingComputer, error) {
+	return collectPaged(1, defaultPageLimit, func(page, limit int) ([]RoamingComputer, error) {
+		params := map[string]string{
+			"page":  strconv.Itoa(page),
+			"limit": strconv.Itoa(limit),
+		}
+		maps.Copy(params, filters)
+		return c.ListRoamingComputers(ctx, params)
 	})
 }

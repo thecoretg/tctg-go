@@ -1,0 +1,429 @@
+openapi: 3.0.1
+info:
+  title: Cisco Umbrella Deployments Policies API
+  version: 2.0.0
+  description: Manage the policies for the deployments in your organization.
+  contact:
+    name: Cloud Security Developer Community
+
+servers:
+  - url: https://api.umbrella.com/{basePath}
+    variables:
+      basePath:
+        default: deployments/v2
+
+security:
+  - oauthFlow: []
+
+tags:
+  - name: Policy
+    description: Umbrella Policy Management
+  - name: Umbrella
+
+paths:
+
+  '/policies':
+    get:
+      tags:
+        - Policy
+        - Umbrella
+      summary: List Policies
+      description: |-
+        List the Umbrella policies. You can filter by policy type.
+        If you do not specify a policy type, Umbrella returns the DNS policies.
+      operationId: listPolicies
+      security:
+        - oauthFlow:
+          - deployments.policies:read
+      parameters:
+        - $ref: '#/components/parameters/paginationPageParam'
+        - $ref: '#/components/parameters/paginationLimitParam'
+        - $ref: '#/components/parameters/policyTypeParam'
+      responses:
+        '200':
+          description: OK
+          headers:
+            Content-Type:
+              $ref: '#/components/headers/Content-Type'
+            Date:
+              $ref: '#/components/headers/Date'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PolicyList'
+              example:
+              - policyId: 1
+                organizationId: 1234
+                name: ApiDemoPolicy
+                priority: 1
+                createdAt: '2017-09-22T04:18:51.000Z'
+                isDefault: false
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerErr'
+
+  '/policies/{policyId}/identities/{originId}':
+      put:
+        tags:
+          - Policy
+          - Umbrella
+        description: |-
+          Add an identity to your policy.
+          Policy changes may require up to 20 minutes to take effect globally.
+          For DNS policies, TTLs, caching, and session reuse may cause some devices
+          and domains to appear to take longer to update.
+        summary: Add Identity to Policy
+        operationId: updatePolicyIdentities
+        security:
+        - oauthFlow:
+          - deployments.policies:write
+        parameters:
+          - $ref: '#/components/parameters/networkDeviceOriginIdParam'
+          - $ref: '#/components/parameters/policyIdParam'
+        responses:
+          '200':
+            description: OK
+            headers:
+              Content-Type:
+                $ref: '#/components/headers/Content-Type'
+              Date:
+                $ref: '#/components/headers/Date'
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/OriginId'
+                example:
+                  123467
+          '400':
+            $ref: '#/components/responses/InvalidRequest'
+          '401':
+            $ref: '#/components/responses/Unauthorized'
+          '403':
+            $ref: '#/components/responses/Forbidden'
+          '404':
+            $ref: '#/components/responses/NotFound'
+          '500':
+            $ref: '#/components/responses/ServerErr'
+
+      delete:
+        tags:
+          - Policy
+          - Umbrella
+        description: |-
+          Remove an identity from an Umbrella policy.
+          Policy changes may require up to 20 minutes to take effect globally.
+          For DNS policies, TTLs, caching, and session reuse may cause some devices and domains to appear to take longer to update.
+        summary: Delete Identity From Policy
+        operationId: deletePolicyIdentities
+        security:
+        - oauthFlow:
+          - deployments.policies:write
+        parameters:
+          - $ref: '#/components/parameters/networkDeviceOriginIdParam'
+          - $ref: '#/components/parameters/policyIdParam'
+        responses:
+          '200':
+            description: OK
+            headers:
+              Content-Type:
+                $ref: '#/components/headers/Content-Type'
+              Date:
+                $ref: '#/components/headers/Date'
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/OriginId'
+                example:
+                  123467
+          '400':
+            $ref: '#/components/responses/InvalidRequest'
+          '401':
+            $ref: '#/components/responses/Unauthorized'
+          '403':
+            $ref: '#/components/responses/Forbidden'
+          '404':
+            $ref: '#/components/responses/NotFound'
+          '500':
+            $ref: '#/components/responses/ServerErr'
+
+components:
+  securitySchemes:
+    oauthFlow:
+      type: oauth2
+      description: client credential flow
+      flows:
+        clientCredentials:
+          tokenUrl: https://api.umbrella.com/auth/v2/token
+          scopes:
+            deployments.policies:write: 'Write deployments policies'
+            deployments.policies:read: 'Read deployments policies'
+
+  headers:
+    Content-Type:
+      schema:
+        type: string
+      description: The MIME content type of the response body.
+      example: application/json
+    Date:
+      schema:
+        type: string
+        pattern: '^[0-90-90-90-9-0-90-9-0-90-9T0-90-9:0-90-9:0-90-9Z]+$'
+      description: The timestamp of the response.
+      example: '2023-03-14T18:34:25Z'
+      #'2023-03-14T18:34:25.412525046Z'
+
+  parameters:
+    networkDeviceOriginIdParam:
+      name: originId
+      in: path
+      description: The origin ID of the identity.
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+        format: int32
+    paginationPageParam:
+      name: page
+      in: query
+      description: |-
+        The number of a page in the collection.
+      required: false
+      schema:
+        default: 1
+        type: integer
+        format: int32
+        minimum: 1
+    paginationLimitParam:
+      name: limit
+      in: query
+      description: |-
+        The number of records from the collection to return on the page.
+      required: false
+      schema:
+        default: 100
+        type: integer
+        format: int32
+        minimum: 1
+        maximum: 100
+    policyTypeParam:
+      name: type
+      in: query
+      description: The type of the policy (`dns` or `web`).
+      required: false
+      schema:
+        default: dns
+        enum:
+          - dns
+          - web
+        type: string
+      example: web
+    policyIdParam:
+      name: policyId
+      in: path
+      description: The ID of the policy.
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+        format: int32
+
+  schemas:
+    OriginId:
+      description: The origin ID of the identity.
+      type: integer
+      minimum: 1
+      format: int32
+      example: 358739
+
+    PolicyList:
+      type: array
+      items:
+        $ref: '#/components/schemas/PolicyStub'
+    PolicyStub:
+      type: object
+      minProperties: 6
+      required: [policyId, organizationId, name, priority, createdAt, isDefault]
+      properties:
+        policyId:
+          type: integer
+          description: The unique policy ID.
+          minimum: 1
+        organizationId:
+          type: integer
+          example: 1234
+          minimum: 1
+        name:
+          type: string
+          description: The label for the policy.
+          example: ApiDemoPolicy
+          minLength: 1
+        priority:
+          type: integer
+          description: The priority of the policy.
+          minimum: 0
+        createdAt:
+          type: string
+          format: date-time
+          example: '2017-09-22T04:18:51.000Z'
+          description: The time and date (ISO 8601-formatted timestamp) when the policy was created.
+          #pattern: "^((?:[12][0-9]{3}))-(1[0-2]|0[1-9])-(3[01]|0[1-9]|[12][0-9])T(2[0-3]|[01][0-9]):([0-5][0-9]):([0-5][0-9])(\\.[0-9]{3})(Z)$"
+        isDefault:
+          type: boolean
+          example: true
+          description: Specified whether the policy is the default.
+
+    NotFoundError:
+      description: Not Found
+      type: object
+      properties:
+        statusCode:
+          type: integer
+          example: 404
+          description: HTTP status code
+        error:
+          type: string
+          example: Not Found
+          description: A brief description of the error
+        message:
+          type: string
+          description: Detailed error message
+
+    UnauthorizedError:
+      description: Unauthorized
+      type: object
+      properties:
+        statusCode:
+          type: integer
+          example: 401
+          description: HTTP status code
+        error:
+          type: string
+          example: Unauthorized
+          description: The authorization header is missing or the token is unauthorized
+        message:
+          type: string
+          description: Detailed error message
+
+    ForbiddenError:
+      description: Forbidden
+      type: object
+      properties:
+        statusCode:
+          type: integer
+          example: 403
+          description: HTTP status code
+        error:
+          type: string
+          example: Forbidden, Invalid authentication credentials
+          description: a brief description of the error
+        message:
+          type: string
+          description: Detailed error message
+
+    BadRequestError:
+      description: Bad Request
+      type: object
+      properties:
+        statusCode:
+          type: integer
+          example: 400
+          description: HTTP status code
+        error:
+          type: string
+          example: Validation Error
+          description: A brief description of the error
+        message:
+          type: string
+          description: Detailed error message
+        validationErrors:
+          type: object
+          properties:
+            someProperty:
+              type: string
+              example: must not be empty
+              description: the name of the property failing validation.
+
+    ServerError:
+      description: Internal Server Error
+      type: object
+      properties:
+        statusCode:
+          type: integer
+          example: 500
+          description: HTTP status code
+        error:
+          type: string
+          example: Internal Server Error
+          description: The server has an internal error and could not process the request.
+        message:
+          type: string
+          description: Detailed error message
+
+  # common responses
+  responses:
+    InvalidRequest:
+      description: Bad Request
+      headers:
+        Content-Type:
+          $ref: '#/components/headers/Content-Type'
+        Date:
+          $ref: '#/components/headers/Date'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/BadRequestError'
+
+    Unauthorized:
+      description: Unauthorized
+      headers:
+        Content-Type:
+          $ref: '#/components/headers/Content-Type'
+        Date:
+          $ref: '#/components/headers/Date'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/UnauthorizedError'
+
+    Forbidden:
+      description: Forbidden
+      headers:
+        Content-Type:
+          $ref: '#/components/headers/Content-Type'
+        Date:
+          $ref: '#/components/headers/Date'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ForbiddenError'
+
+    NotFound:
+      description: Not found
+      headers:
+        Content-Type:
+          $ref: '#/components/headers/Content-Type'
+        Date:
+          $ref: '#/components/headers/Date'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/NotFoundError'
+
+    ServerErr:
+      description: Internal Server Error
+      headers:
+        Content-Type:
+          $ref: '#/components/headers/Content-Type'
+        Date:
+          $ref: '#/components/headers/Date'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ServerError'
