@@ -9,6 +9,10 @@ func companyIDEndpoint(companyID int) string {
 	return fmt.Sprintf("company/companies/%d", companyID)
 }
 
+func companyTypeIDEndpoint(typeID int) string {
+	return fmt.Sprintf("company/companies/types/%d", typeID)
+}
+
 func (c *Client) PostCompany(ctx context.Context, company *Company) (*Company, error) {
 	return post[Company](ctx, c, "company/companies", company)
 }
@@ -31,4 +35,28 @@ func (c *Client) PatchCompany(ctx context.Context, companyID int, patchOps []Pat
 
 func (c *Client) DeleteCompany(ctx context.Context, companyID int) error {
 	return del(ctx, c, companyIDEndpoint(companyID))
+}
+
+func (c *Client) PostCompanyType(ctx context.Context, companyType *CompanyType) (*CompanyType, error) {
+	return post[CompanyType](ctx, c, "company/companies/types", companyType)
+}
+
+func (c *Client) ListCompanyTypes(ctx context.Context, params map[string]string) ([]CompanyType, error) {
+	return getMany[CompanyType](ctx, c, "company/companies/types", params)
+}
+
+func (c *Client) GetCompanyType(ctx context.Context, typeID int, params map[string]string) (*CompanyType, error) {
+	return get[CompanyType](ctx, c, companyTypeIDEndpoint(typeID), params)
+}
+
+func (c *Client) PutCompanyType(ctx context.Context, typeID int, companyType *CompanyType) (*CompanyType, error) {
+	return put[CompanyType](ctx, c, companyTypeIDEndpoint(typeID), companyType)
+}
+
+func (c *Client) PatchCompanyType(ctx context.Context, typeID int, patchOps []PatchOp) (*CompanyType, error) {
+	return patch[CompanyType](ctx, c, companyTypeIDEndpoint(typeID), patchOps)
+}
+
+func (c *Client) DeleteCompanyType(ctx context.Context, typeID int) error {
+	return del(ctx, c, companyTypeIDEndpoint(typeID))
 }

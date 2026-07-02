@@ -475,6 +475,18 @@ type Company struct {
 		ConnectWiseID    string `json:"connectWiseId,omitempty"`
 	} `json:"customFields,omitzero"`
 }
+
+type CompanyType struct {
+	Info                any    `json:"_info,omitempty"`
+	ID                  int    `json:"id,omitempty"`
+	Name                string `json:"name,omitempty"`
+	DefaultFlag         bool   `json:"defaultFlag,omitempty"`
+	VendorFlag          bool   `json:"vendorFlag,omitempty"`
+	ServiceAlertFlag    bool   `json:"serviceAlertFlag,omitempty"`
+	ServiceAlertMessage string `json:"serviceAlertMessage,omitempty"`
+	ConnectWiseID       string `json:"connectWiseId,omitempty"`
+}
+
 type Contact struct {
 	Info             any    `json:"_info,omitempty"`
 	AddressLine1     string `json:"addressLine1,omitempty"`
@@ -1193,32 +1205,32 @@ type ServiceTicketNoteAll struct {
 }
 
 type BoardType struct {
-	Info   any `json:"_info,omitempty"`
-	Board  struct {
+	Info  any `json:"_info,omitempty"`
+	Board struct {
 		Info any    `json:"_info,omitempty"`
 		ID   int    `json:"id,omitempty"`
 		Name string `json:"name,omitempty"`
 	} `json:"board,omitzero"`
-	Category             string `json:"category,omitempty"`
-	ConnectWiseID        string `json:"connectWiseId,omitempty"`
-	DefaultFlag          bool   `json:"defaultFlag,omitempty"`
-	Department           struct {
+	Category      string `json:"category,omitempty"`
+	ConnectWiseID string `json:"connectWiseId,omitempty"`
+	DefaultFlag   bool   `json:"defaultFlag,omitempty"`
+	Department    struct {
 		Info       any    `json:"_info,omitempty"`
 		ID         int    `json:"id,omitempty"`
 		Identifier string `json:"identifier,omitempty"`
 		Name       string `json:"name,omitempty"`
 	} `json:"department,omitzero"`
-	ID           int `json:"id,omitempty"`
-	InactiveFlag bool   `json:"inactiveFlag,omitempty"`
+	ID           int  `json:"id,omitempty"`
+	InactiveFlag bool `json:"inactiveFlag,omitempty"`
 	Location     struct {
 		Info any    `json:"_info,omitempty"`
 		ID   int    `json:"id,omitempty"`
 		Name string `json:"name,omitempty"`
 	} `json:"location,omitzero"`
-	Name                   string `json:"name,omitempty"`
-	ParentConnectWiseID    string `json:"parentConnectWiseId,omitempty"`
-	ParentID               int    `json:"parentId,omitempty"`
-	RequestForChangeFlag   bool   `json:"requestForChangeFlag,omitempty"`
+	Name                 string `json:"name,omitempty"`
+	ParentConnectWiseID  string `json:"parentConnectWiseId,omitempty"`
+	ParentID             int    `json:"parentId,omitempty"`
+	RequestForChangeFlag bool   `json:"requestForChangeFlag,omitempty"`
 }
 
 type BoardSubType struct {
