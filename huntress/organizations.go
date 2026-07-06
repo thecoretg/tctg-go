@@ -52,6 +52,13 @@ type organizationEnvelope struct {
 	Organization OrganizationWithActualProductUsages `json:"organization"`
 }
 
+// organizationResultEnvelope wraps the organization returned by create/update
+// requests, which nest the organization under an "organization" key despite the
+// documentation showing a flat object.
+type organizationResultEnvelope struct {
+	Organization Organization `json:"organization"`
+}
+
 // ListOrganizations returns a single page of organizations.
 func (c *Client) ListOrganizations(ctx context.Context, params map[string]string) (*OrganizationsResponse, error) {
 	result, err := get[OrganizationsResponse](ctx, c, endpointURL("organizations"), params)
@@ -72,20 +79,20 @@ func (c *Client) GetOrganization(ctx context.Context, id int64) (*OrganizationWi
 
 // CreateOrganization creates an organization.
 func (c *Client) CreateOrganization(ctx context.Context, body OrganizationCreationParameters) (*Organization, error) {
-	result, err := post[Organization](ctx, c, endpointURL("organizations"), body)
+	result, err := post[organizationResultEnvelope](ctx, c, endpointURL("organizations"), body)
 	if err != nil {
 		return nil, fmt.Errorf("create organization: %w", err)
 	}
-	return result, nil
+	return &result.Organization, nil
 }
 
 // UpdateOrganization updates an organization.
 func (c *Client) UpdateOrganization(ctx context.Context, id int64, body OrganizationUpdateParameters) (*Organization, error) {
-	result, err := patch[Organization](ctx, c, endpointURL(fmt.Sprintf("organizations/%d", id)), body)
+	result, err := patch[organizationResultEnvelope](ctx, c, endpointURL(fmt.Sprintf("organizations/%d", id)), body)
 	if err != nil {
 		return nil, fmt.Errorf("update organization: %w", err)
 	}
-	return result, nil
+	return &result.Organization, nil
 }
 
 // DeleteOrganization deletes an organization.
@@ -119,21 +126,21 @@ func (c *Client) GetAccountOrganization(ctx context.Context, accountID, id int64
 // CreateAccountOrganization creates an organization within an account (Reseller
 // credentials only).
 func (c *Client) CreateAccountOrganization(ctx context.Context, accountID int64, body OrganizationCreationParameters) (*Organization, error) {
-	result, err := post[Organization](ctx, c, endpointURL(fmt.Sprintf("accounts/%d/organizations", accountID)), body)
+	result, err := post[organizationResultEnvelope](ctx, c, endpointURL(fmt.Sprintf("accounts/%d/organizations", accountID)), body)
 	if err != nil {
 		return nil, fmt.Errorf("create account organization: %w", err)
 	}
-	return result, nil
+	return &result.Organization, nil
 }
 
 // UpdateAccountOrganization updates an organization within an account (Reseller
 // credentials only).
 func (c *Client) UpdateAccountOrganization(ctx context.Context, accountID, id int64, body OrganizationUpdateParameters) (*Organization, error) {
-	result, err := patch[Organization](ctx, c, endpointURL(fmt.Sprintf("accounts/%d/organizations/%d", accountID, id)), body)
+	result, err := patch[organizationResultEnvelope](ctx, c, endpointURL(fmt.Sprintf("accounts/%d/organizations/%d", accountID, id)), body)
 	if err != nil {
 		return nil, fmt.Errorf("update account organization: %w", err)
 	}
-	return result, nil
+	return &result.Organization, nil
 }
 
 // DeleteAccountOrganization deletes an organization within an account (Reseller
