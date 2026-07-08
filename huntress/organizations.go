@@ -26,7 +26,7 @@ type Organization struct {
 // detail, returned when fetching a single organization.
 type OrganizationWithActualProductUsages struct {
 	Organization
-	ActualUsages string `json:"actual_usages,omitempty"`
+	ActualUsages map[string]any `json:"actual_usages,omitempty"`
 }
 
 // OrganizationCreationParameters is the request body for creating an organization.
