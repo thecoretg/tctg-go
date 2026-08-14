@@ -31,9 +31,12 @@ func main() {
 		log.Fatalf("creating salesforce client: %v", err)
 	}
 
-	records, err := salesforce.Query[map[string]any](ctx, client, q, simplify)
+	records, err := salesforce.Query[map[string]any](ctx, client, q)
 	if err != nil {
 		log.Fatalf("query: %v", err)
+	}
+	if simplify {
+		records = salesforce.SimplifyRecords(records)
 	}
 
 	out, err := json.MarshalIndent(records, "", "  ")

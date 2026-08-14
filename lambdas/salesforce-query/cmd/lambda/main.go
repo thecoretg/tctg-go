@@ -36,9 +36,13 @@ func handler(ctx context.Context, req events.LambdaFunctionURLRequest) (events.L
 
 	simplify := req.QueryStringParameters["simplify"] == "true"
 
-	records, err := salesforce.Query[map[string]any](ctx, sfClient, q, simplify)
+	records, err := salesforce.Query[map[string]any](ctx, sfClient, q)
 	if err != nil {
 		return errResponse(500, err.Error()), nil
+	}
+
+	if simplify {
+		records = salesforce.SimplifyRecords(records)
 	}
 
 	body, err := json.Marshal(records)

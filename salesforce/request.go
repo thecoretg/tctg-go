@@ -20,9 +20,10 @@ type queryResp[T any] struct {
 var ErrNotFound = errors.New("404 status returned")
 
 // Query executes a SOQL query and returns all records, following nextRecordsUrl
-// pages until Salesforce signals done. If simplify is true, each record's keys
-// are lowercased, __c suffixes are stripped, and the attributes key is dropped.
-func Query[T any](ctx context.Context, c *Client, q string, simplify bool) ([]T, error) {
+// pages until Salesforce signals done. Records are decoded into T exactly as
+// Salesforce returns them, including the attributes key; use QueryRecords for
+// normalized keys.
+func Query[T any](ctx context.Context, c *Client, q string) ([]T, error) {
 	var all []T
 	url := c.endpointURL("query")
 	params := map[string]string{"q": q}
@@ -43,15 +44,26 @@ func Query[T any](ctx context.Context, c *Client, q string, simplify bool) ([]T,
 		params = nil
 	}
 
-	if simplify {
-		for i, record := range all {
-			if m, ok := any(record).(map[string]any); ok {
-				all[i] = any(simplifyRecord(m)).(T)
-			}
-		}
+	return all, nil
+}
+
+// QueryRecords executes a SOQL query and returns each record with its keys
+// lowercased, __c suffixes stripped, and the attributes key dropped.
+func QueryRecords(ctx context.Context, c *Client, q string) ([]map[string]any, error) {
+	records, err := Query[map[string]any](ctx, c, q)
+	if err != nil {
+		return nil, err
 	}
 
-	return all, nil
+	return SimplifyRecords(records), nil
+}
+
+func SimplifyRecords(records []map[string]any) []map[string]any {
+	for i, r := range records {
+		records[i] = simplifyRecord(r)
+	}
+
+	return records
 }
 
 func simplifyRecord(m map[string]any) map[string]any {
