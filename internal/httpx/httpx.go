@@ -191,11 +191,22 @@ func Do(ctx context.Context, client *http.Client, method, rawURL string, params 
 	defer resp.Body.Close()
 
 	data, err := io.ReadAll(resp.Body)
-	if err != nil {
+	if err != nil && !bodyComplete(resp, data) {
 		return nil, err
 	}
 
 	return &Response{StatusCode: resp.StatusCode, Body: data, Header: resp.Header}, nil
+}
+
+// bodyComplete reports whether data already holds the whole body even though
+// reading it returned an error. Some servers send a complete response and then
+// reset the HTTP/2 stream — ConnectWise Automate does this on a 404 — which
+// surfaces as "stream error: ... CANCEL; received from peer" after every byte
+// has arrived. Discarding the response there would turn a clean 404 into an
+// opaque transport failure. A response with no declared length stays an error,
+// since a short read is indistinguishable from a complete one.
+func bodyComplete(resp *http.Response, data []byte) bool {
+	return resp.ContentLength >= 0 && int64(len(data)) >= resp.ContentLength
 }
 
 // DecodeJSON unmarshals data into target, treating an empty body as a no-op so
