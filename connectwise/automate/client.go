@@ -6,7 +6,9 @@
 // Automate is deployed per-tenant, so the server base URL is supplied via
 // config. Authentication uses a bearer token obtained by POSTing Automate
 // credentials to /cwa/api/v1/apitoken; every request also carries a registered
-// integrator ClientId header. See auth.go for the login/refresh flow.
+// integrator ClientId header. A 401 on any other endpoint triggers one fresh
+// login and a replay, so a long-lived client survives token expiry. See auth.go
+// for the login/refresh flow.
 package automate
 
 import (
@@ -54,6 +56,10 @@ type Client struct {
 	mu          sync.RWMutex
 	token       string
 	tokenResult *TokenResult
+
+	// loginMu serializes re-login attempts. It is separate from mu because
+	// Login must not hold the token lock across its HTTP request.
+	loginMu sync.Mutex
 }
 
 // NewClient builds a ConnectWise Automate client from cfg. Unless cfg.Token is

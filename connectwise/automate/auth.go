@@ -4,7 +4,12 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 )
+
+// apiTokenEndpoint is the login endpoint. Requests to it must never trigger a
+// re-login on 401, or a rejected credential would retry forever.
+const apiTokenEndpoint = "cwa/api/v1/apitoken"
 
 // TokenCredentials is the body POSTed to /cwa/api/v1/apitoken
 // (Automate.Api.Domain.Contracts.Security.TokenCredentials).
@@ -62,6 +67,31 @@ func (c *Client) setToken(tr *TokenResult) {
 	c.tokenResult = tr
 }
 
+// canRelogin reports whether a 401 from endpoint is worth retrying after a
+// fresh login. A client configured with a pre-issued token has no credentials
+// to log in with, and the login endpoints themselves are always excluded.
+func (c *Client) canRelogin(endpoint string) bool {
+	if c.username == "" || c.password == "" {
+		return false
+	}
+	return !strings.HasPrefix(endpoint, apiTokenEndpoint)
+}
+
+// relogin logs in again unless another caller already rotated the token while
+// this one was waiting, so a burst of concurrent 401s costs a single login.
+// stale is the token that was in use when the 401 came back.
+func (c *Client) relogin(ctx context.Context, stale string) error {
+	c.loginMu.Lock()
+	defer c.loginMu.Unlock()
+
+	if c.currentToken() != stale {
+		return nil
+	}
+
+	_, err := c.Login(ctx)
+	return err
+}
+
 // Login exchanges the configured username/password (and optional two-factor
 // passcode) for a bearer token via POST /cwa/api/v1/apitoken, storing it for
 // subsequent requests. It is called automatically by NewClient unless a token
@@ -72,7 +102,7 @@ func (c *Client) Login(ctx context.Context) (*TokenResult, error) {
 		Password:          c.password,
 		TwoFactorPasscode: c.twoFactor,
 	}
-	result, err := post[TokenResult](ctx, c, "cwa/api/v1/apitoken", creds)
+	result, err := post[TokenResult](ctx, c, apiTokenEndpoint, creds)
 	if err != nil {
 		return nil, fmt.Errorf("automate login: %w", err)
 	}
@@ -94,7 +124,7 @@ func (c *Client) Refresh(ctx context.Context) (*TokenResult, error) {
 		return nil, fmt.Errorf("automate refresh: no token to refresh")
 	}
 	// The refresh body is the current token as a bare JSON string.
-	result, err := post[TokenResult](ctx, c, "cwa/api/v1/apitoken/refresh", token)
+	result, err := post[TokenResult](ctx, c, apiTokenEndpoint+"/refresh", token)
 	if err != nil {
 		return nil, fmt.Errorf("automate refresh: %w", err)
 	}
