@@ -19,8 +19,8 @@ func (c *Client) PostCallback(ctx context.Context, webhook *Callback) (*Callback
 	return post[Callback](ctx, c, "system/callbacks", webhook)
 }
 
-func (c *Client) ListCallbacks(ctx context.Context, params map[string]string) ([]Callback, error) {
-	return getMany[Callback](ctx, c, "system/callbacks", params)
+func (c *Client) ListCallbacks(ctx context.Context, params map[string]string, opts ...ListOption) ([]Callback, error) {
+	return getMany[Callback](ctx, c, "system/callbacks", params, opts...)
 }
 
 func (c *Client) GetCallback(ctx context.Context, callbackID int, params map[string]string) (*Callback, error) {

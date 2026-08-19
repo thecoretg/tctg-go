@@ -13,8 +13,8 @@ func (c *Client) PostContact(ctx context.Context, contact *Contact) (*Contact, e
 	return post[Contact](ctx, c, "company/contacts", contact)
 }
 
-func (c *Client) ListContacts(ctx context.Context, params map[string]string) ([]Contact, error) {
-	return getMany[Contact](ctx, c, "company/contacts", params)
+func (c *Client) ListContacts(ctx context.Context, params map[string]string, opts ...ListOption) ([]Contact, error) {
+	return getMany[Contact](ctx, c, "company/contacts", params, opts...)
 }
 
 func (c *Client) GetContact(ctx context.Context, contactID int, params map[string]string) (*Contact, error) {

@@ -29,8 +29,8 @@ func (c *Client) PostTicket(ctx context.Context, ticket *Ticket) (*Ticket, error
 	return post[Ticket](ctx, c, "service/tickets", ticket)
 }
 
-func (c *Client) ListTickets(ctx context.Context, params map[string]string) ([]Ticket, error) {
-	return getMany[Ticket](ctx, c, "service/tickets", params)
+func (c *Client) ListTickets(ctx context.Context, params map[string]string, opts ...ListOption) ([]Ticket, error) {
+	return getMany[Ticket](ctx, c, "service/tickets", params, opts...)
 }
 
 func (c *Client) GetTicket(ctx context.Context, ticketID int, params map[string]string) (*Ticket, error) {
@@ -52,8 +52,8 @@ func (c *Client) DeleteTicket(ctx context.Context, ticketID int) error {
 // ListServiceTicketNotesAll gets all ticket notes, regardless of if they have a time entry.
 //
 // This is most likely the one you want to use unless you consistently uncheck the time entry box.
-func (c *Client) ListServiceTicketNotesAll(ctx context.Context, params map[string]string, ticketID int) ([]ServiceTicketNoteAll, error) {
-	return getMany[ServiceTicketNoteAll](ctx, c, allNotesEndpoint(ticketID), params)
+func (c *Client) ListServiceTicketNotesAll(ctx context.Context, params map[string]string, ticketID int, opts ...ListOption) ([]ServiceTicketNoteAll, error) {
+	return getMany[ServiceTicketNoteAll](ctx, c, allNotesEndpoint(ticketID), params, opts...)
 }
 
 func (c *Client) PostServiceTicketNote(ctx context.Context, ticketNote *ServiceTicketNote, ticketID int) (*ServiceTicketNote, error) {
@@ -63,8 +63,8 @@ func (c *Client) PostServiceTicketNote(ctx context.Context, ticketNote *ServiceT
 // ListServiceTicketNotes gets all notes that are not time entry.
 //
 // Not recommended since you will probably get what you need through ListServiceTicketNotesAll.
-func (c *Client) ListServiceTicketNotes(ctx context.Context, params map[string]string, ticketID int) ([]ServiceTicketNote, error) {
-	return getMany[ServiceTicketNote](ctx, c, notesEndpoint(ticketID), params)
+func (c *Client) ListServiceTicketNotes(ctx context.Context, params map[string]string, ticketID int, opts ...ListOption) ([]ServiceTicketNote, error) {
+	return getMany[ServiceTicketNote](ctx, c, notesEndpoint(ticketID), params, opts...)
 }
 
 func (c *Client) GetServiceTicketNote(ctx context.Context, noteID int, params map[string]string, ticketID int) (*ServiceTicketNote, error) {

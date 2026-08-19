@@ -20,6 +20,7 @@ type Config struct {
 
 type Client struct {
 	httpClient *http.Client
+	baseURL    string
 }
 
 // NewClient builds a ConnectWise PSA client from cfg. The ctx parameter is
@@ -52,7 +53,7 @@ func NewClient(_ context.Context, cfg Config) (*Client, error) {
 		"clientId":      cfg.ClientID,
 	}
 
-	return &Client{httpClient: httpx.NewClient(nil, headers, 3)}, nil
+	return &Client{httpClient: httpx.NewClient(nil, headers, 3), baseURL: defaultBaseURL}, nil
 }
 
 func NewClientFromEnv(ctx context.Context) (*Client, error) {

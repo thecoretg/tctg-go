@@ -11,13 +11,13 @@ import (
 )
 
 const (
-	baseURL = "https://api-na.myconnectwise.net/v4_6_release/apis/3.0"
+	defaultBaseURL = "https://api-na.myconnectwise.net/v4_6_release/apis/3.0"
 )
 
 var ErrNotFound = errors.New("404 status returned")
 
 func get[T any](ctx context.Context, c *Client, endpoint string, params map[string]string) (*T, error) {
-	res, err := httpx.Do(ctx, c.httpClient, http.MethodGet, fullURL(baseURL, endpoint), params, nil)
+	res, err := httpx.Do(ctx, c.httpClient, http.MethodGet, c.endpointURL(endpoint), params, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -36,12 +36,19 @@ func get[T any](ctx context.Context, c *Client, endpoint string, params map[stri
 	return &target, nil
 }
 
-func getMany[T any](ctx context.Context, c *Client, endpoint string, params map[string]string) ([]T, error) {
+// getMany follows ConnectWise's Link header until every page is collected, or
+// until a WithLimit cap is reached.
+func getMany[T any](ctx context.Context, c *Client, endpoint string, params map[string]string, opts ...ListOption) ([]T, error) {
+	cfg := newListConfig(opts)
+	if cfg.limit > 0 {
+		params = withPageSize(params, min(cfg.limit, maxPageSize))
+	}
+
 	var allItems []T
 
-	endpoint = fullURL(baseURL, endpoint)
-	for endpoint != "" {
-		res, err := httpx.Do(ctx, c.httpClient, http.MethodGet, endpoint, params, nil)
+	next := c.endpointURL(endpoint)
+	for next != "" {
+		res, err := httpx.Do(ctx, c.httpClient, http.MethodGet, next, params, nil)
 		if err != nil {
 			return nil, err
 		}
@@ -59,15 +66,19 @@ func getMany[T any](ctx context.Context, c *Client, endpoint string, params map[
 		}
 
 		allItems = append(allItems, target...)
+		if cfg.limit > 0 && len(allItems) >= cfg.limit {
+			return allItems[:cfg.limit], nil
+		}
+
 		params = nil
-		endpoint = parseLinkHeader(res.Header.Get("Link"), "next")
+		next = parseLinkHeader(res.Header.Get("Link"), "next")
 	}
 
 	return allItems, nil
 }
 
 func post[T any](ctx context.Context, c *Client, endpoint string, body any) (*T, error) {
-	res, err := httpx.Do(ctx, c.httpClient, http.MethodPost, fullURL(baseURL, endpoint), nil, body)
+	res, err := httpx.Do(ctx, c.httpClient, http.MethodPost, c.endpointURL(endpoint), nil, body)
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +95,7 @@ func post[T any](ctx context.Context, c *Client, endpoint string, body any) (*T,
 }
 
 func put[T any](ctx context.Context, c *Client, endpoint string, body any) (*T, error) {
-	res, err := httpx.Do(ctx, c.httpClient, http.MethodPut, fullURL(baseURL, endpoint), nil, body)
+	res, err := httpx.Do(ctx, c.httpClient, http.MethodPut, c.endpointURL(endpoint), nil, body)
 	if err != nil {
 		return nil, err
 	}
@@ -104,7 +115,7 @@ func put[T any](ctx context.Context, c *Client, endpoint string, body any) (*T, 
 }
 
 func patch[T any](ctx context.Context, c *Client, endpoint string, patchOps []PatchOp) (*T, error) {
-	res, err := httpx.Do(ctx, c.httpClient, http.MethodPatch, fullURL(baseURL, endpoint), nil, patchOps)
+	res, err := httpx.Do(ctx, c.httpClient, http.MethodPatch, c.endpointURL(endpoint), nil, patchOps)
 	if err != nil {
 		return nil, err
 	}
@@ -121,7 +132,7 @@ func patch[T any](ctx context.Context, c *Client, endpoint string, patchOps []Pa
 }
 
 func del(ctx context.Context, c *Client, endpoint string) error {
-	res, err := httpx.Do(ctx, c.httpClient, http.MethodDelete, fullURL(baseURL, endpoint), nil, nil)
+	res, err := httpx.Do(ctx, c.httpClient, http.MethodDelete, c.endpointURL(endpoint), nil, nil)
 	if err != nil {
 		return err
 	}
@@ -136,8 +147,8 @@ func del(ctx context.Context, c *Client, endpoint string) error {
 	return nil
 }
 
-func fullURL(base, endpoint string) string {
-	return fmt.Sprintf("%s/%s", base, endpoint)
+func (c *Client) endpointURL(endpoint string) string {
+	return fmt.Sprintf("%s/%s", c.baseURL, endpoint)
 }
 
 func parseLinkHeader(linkHeader, rel string) string {

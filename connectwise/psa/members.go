@@ -13,8 +13,8 @@ func (c *Client) PostMember(ctx context.Context, member *Member) (*Member, error
 	return post[Member](ctx, c, "system/members", member)
 }
 
-func (c *Client) ListMembers(ctx context.Context, params map[string]string) ([]Member, error) {
-	return getMany[Member](ctx, c, "system/members", params)
+func (c *Client) ListMembers(ctx context.Context, params map[string]string, opts ...ListOption) ([]Member, error) {
+	return getMany[Member](ctx, c, "system/members", params, opts...)
 }
 
 func (c *Client) GetMemberByIdentifier(ctx context.Context, identifier string) (*Member, error) {

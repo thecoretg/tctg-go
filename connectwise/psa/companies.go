@@ -29,8 +29,12 @@ func (c *Client) PostCompany(ctx context.Context, company *Company) (*Company, e
 	return post[Company](ctx, c, "company/companies", company)
 }
 
-func (c *Client) ListCompanies(ctx context.Context, params map[string]string) ([]Company, error) {
-	return getMany[Company](ctx, c, "company/companies", params)
+// ListCompanies returns companies across every page unless WithLimit caps the
+// result. On a large tenant an uncapped call is many round trips, so pass
+// ConnectWise conditions in params to narrow it, for example
+// {"conditions": `status/name="Active" and deletedFlag=false`}.
+func (c *Client) ListCompanies(ctx context.Context, params map[string]string, opts ...ListOption) ([]Company, error) {
+	return getMany[Company](ctx, c, "company/companies", params, opts...)
 }
 
 func (c *Client) GetCompany(ctx context.Context, companyID int, params map[string]string) (*Company, error) {
@@ -53,8 +57,8 @@ func (c *Client) PostCompanyType(ctx context.Context, companyType *CompanyType) 
 	return post[CompanyType](ctx, c, "company/companies/types", companyType)
 }
 
-func (c *Client) ListCompanyTypes(ctx context.Context, params map[string]string) ([]CompanyType, error) {
-	return getMany[CompanyType](ctx, c, "company/companies/types", params)
+func (c *Client) ListCompanyTypes(ctx context.Context, params map[string]string, opts ...ListOption) ([]CompanyType, error) {
+	return getMany[CompanyType](ctx, c, "company/companies/types", params, opts...)
 }
 
 func (c *Client) GetCompanyType(ctx context.Context, typeID int, params map[string]string) (*CompanyType, error) {
@@ -77,8 +81,8 @@ func (c *Client) PostCompanyTypeAssociation(ctx context.Context, association *Co
 	return post[CompanyTypeAssociation](ctx, c, "company/companyTypeAssociations", association)
 }
 
-func (c *Client) ListCompanyTypeAssociations(ctx context.Context, params map[string]string) ([]CompanyTypeAssociation, error) {
-	return getMany[CompanyTypeAssociation](ctx, c, "company/companyTypeAssociations", params)
+func (c *Client) ListCompanyTypeAssociations(ctx context.Context, params map[string]string, opts ...ListOption) ([]CompanyTypeAssociation, error) {
+	return getMany[CompanyTypeAssociation](ctx, c, "company/companyTypeAssociations", params, opts...)
 }
 
 func (c *Client) GetCompanyTypeAssociation(ctx context.Context, associationID int, params map[string]string) (*CompanyTypeAssociation, error) {
@@ -101,8 +105,8 @@ func (c *Client) PostCompanyTypeAssociationForCompany(ctx context.Context, assoc
 	return post[CompanyTypeAssociation](ctx, c, companyTypeAssociationEndpoint(companyID), association)
 }
 
-func (c *Client) ListCompanyTypeAssociationsForCompany(ctx context.Context, params map[string]string, companyID int) ([]CompanyTypeAssociation, error) {
-	return getMany[CompanyTypeAssociation](ctx, c, companyTypeAssociationEndpoint(companyID), params)
+func (c *Client) ListCompanyTypeAssociationsForCompany(ctx context.Context, params map[string]string, companyID int, opts ...ListOption) ([]CompanyTypeAssociation, error) {
+	return getMany[CompanyTypeAssociation](ctx, c, companyTypeAssociationEndpoint(companyID), params, opts...)
 }
 
 func (c *Client) GetCompanyTypeAssociationForCompany(ctx context.Context, associationID int, params map[string]string, companyID int) (*CompanyTypeAssociation, error) {
