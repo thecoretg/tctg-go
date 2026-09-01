@@ -26,61 +26,61 @@ func specificNoteEndpoint(ticketID, noteID int) string {
 }
 
 func (c *Client) PostTicket(ctx context.Context, ticket *Ticket) (*Ticket, error) {
-	return post[Ticket](ctx, c, "service/tickets", ticket)
+	return c.Post[Ticket](ctx, "service/tickets", ticket)
 }
 
 func (c *Client) ListTickets(ctx context.Context, params map[string]string, opts ...ListOption) ([]Ticket, error) {
-	return getMany[Ticket](ctx, c, "service/tickets", params, opts...)
+	return c.GetMany[Ticket](ctx, "service/tickets", params, opts...)
 }
 
 func (c *Client) GetTicket(ctx context.Context, ticketID int, params map[string]string) (*Ticket, error) {
-	return get[Ticket](ctx, c, ticketIDEndpoint(ticketID), params)
+	return c.Get[Ticket](ctx, ticketIDEndpoint(ticketID), params)
 }
 
 func (c *Client) PutTicket(ctx context.Context, ticketID int, ticket *Ticket) (*Ticket, error) {
-	return put[Ticket](ctx, c, ticketIDEndpoint(ticketID), ticket)
+	return c.Put[Ticket](ctx, ticketIDEndpoint(ticketID), ticket)
 }
 
 func (c *Client) PatchTicket(ctx context.Context, ticketID int, patchOps []PatchOp) (*Ticket, error) {
-	return patch[Ticket](ctx, c, ticketIDEndpoint(ticketID), patchOps)
+	return c.Patch[Ticket](ctx, ticketIDEndpoint(ticketID), patchOps)
 }
 
 func (c *Client) DeleteTicket(ctx context.Context, ticketID int) error {
-	return del(ctx, c, ticketIDEndpoint(ticketID))
+	return c.Delete(ctx, ticketIDEndpoint(ticketID))
 }
 
 // ListServiceTicketNotesAll gets all ticket notes, regardless of if they have a time entry.
 //
 // This is most likely the one you want to use unless you consistently uncheck the time entry box.
 func (c *Client) ListServiceTicketNotesAll(ctx context.Context, params map[string]string, ticketID int, opts ...ListOption) ([]ServiceTicketNoteAll, error) {
-	return getMany[ServiceTicketNoteAll](ctx, c, allNotesEndpoint(ticketID), params, opts...)
+	return c.GetMany[ServiceTicketNoteAll](ctx, allNotesEndpoint(ticketID), params, opts...)
 }
 
 func (c *Client) PostServiceTicketNote(ctx context.Context, ticketNote *ServiceTicketNote, ticketID int) (*ServiceTicketNote, error) {
-	return post[ServiceTicketNote](ctx, c, notesEndpoint(ticketID), ticketNote)
+	return c.Post[ServiceTicketNote](ctx, notesEndpoint(ticketID), ticketNote)
 }
 
 // ListServiceTicketNotes gets all notes that are not time entry.
 //
 // Not recommended since you will probably get what you need through ListServiceTicketNotesAll.
 func (c *Client) ListServiceTicketNotes(ctx context.Context, params map[string]string, ticketID int, opts ...ListOption) ([]ServiceTicketNote, error) {
-	return getMany[ServiceTicketNote](ctx, c, notesEndpoint(ticketID), params, opts...)
+	return c.GetMany[ServiceTicketNote](ctx, notesEndpoint(ticketID), params, opts...)
 }
 
 func (c *Client) GetServiceTicketNote(ctx context.Context, noteID int, params map[string]string, ticketID int) (*ServiceTicketNote, error) {
-	return get[ServiceTicketNote](ctx, c, specificNoteEndpoint(ticketID, noteID), params)
+	return c.Get[ServiceTicketNote](ctx, specificNoteEndpoint(ticketID, noteID), params)
 }
 
 func (c *Client) PutServiceTicketNote(ctx context.Context, noteID int, ticketNote *ServiceTicketNote, ticketID int) (*ServiceTicketNote, error) {
-	return put[ServiceTicketNote](ctx, c, specificNoteEndpoint(ticketID, noteID), ticketNote)
+	return c.Put[ServiceTicketNote](ctx, specificNoteEndpoint(ticketID, noteID), ticketNote)
 }
 
 func (c *Client) PatchServiceTicketNote(ctx context.Context, noteID int, patchOps []PatchOp, ticketID int) (*ServiceTicketNote, error) {
-	return patch[ServiceTicketNote](ctx, c, specificNoteEndpoint(ticketID, noteID), patchOps)
+	return c.Patch[ServiceTicketNote](ctx, specificNoteEndpoint(ticketID, noteID), patchOps)
 }
 
 func (c *Client) DeleteServiceTicketNote(ctx context.Context, noteID int, ticketID int) error {
-	return del(ctx, c, specificNoteEndpoint(ticketID, noteID))
+	return c.Delete(ctx, specificNoteEndpoint(ticketID, noteID))
 }
 
 func (c *Client) GetMostRecentTicketNote(ctx context.Context, ticketID int) (*ServiceTicketNote, error) {

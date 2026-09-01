@@ -96,7 +96,7 @@ func (c *Client) CreateVariable(ctx context.Context, req NewVariableRequest) (*V
 	if err != nil {
 		return nil, err
 	}
-	result, err := post[Variable](ctx, c, url, req)
+	result, err := c.Post[Variable](ctx, url, req)
 	if err != nil {
 		return nil, fmt.Errorf("create variable: %w", err)
 	}
@@ -109,7 +109,7 @@ func (c *Client) UpdateVariable(ctx context.Context, req VariableUpdateRequest) 
 	if err != nil {
 		return nil, err
 	}
-	result, err := put[Variable](ctx, c, url, req)
+	result, err := c.Put[Variable](ctx, url, req)
 	if err != nil {
 		return nil, fmt.Errorf("update variable: %w", err)
 	}
@@ -123,7 +123,7 @@ func (c *Client) DeleteVariable(ctx context.Context, key string) error {
 	if err != nil {
 		return err
 	}
-	if err := del(ctx, c, url, map[string]string{"key": key}); err != nil {
+	if err := c.Delete(ctx, url, map[string]string{"key": key}); err != nil {
 		return fmt.Errorf("delete variable: %w", err)
 	}
 	return nil
@@ -136,7 +136,7 @@ func (c *Client) GetVariableValue(ctx context.Context, key string) (*VariableVal
 	if err != nil {
 		return nil, err
 	}
-	result, err := get[VariableValueResponse](ctx, c, url, map[string]string{"variable_key": key})
+	result, err := c.Get[VariableValueResponse](ctx, url, map[string]string{"variable_key": key})
 	if err != nil {
 		return nil, fmt.Errorf("get variable value: %w", err)
 	}
@@ -150,7 +150,7 @@ func (c *Client) GetVariableUsage(ctx context.Context, key string) ([]AssetVaria
 	if err != nil {
 		return nil, err
 	}
-	result, err := get[[]AssetVariableUsage](ctx, c, url, map[string]string{"variable_key": key})
+	result, err := c.Get[[]AssetVariableUsage](ctx, url, map[string]string{"variable_key": key})
 	if err != nil {
 		return nil, fmt.Errorf("get variable usage: %w", err)
 	}
@@ -172,7 +172,7 @@ func (c *Client) GetVariablePolicies(ctx context.Context, policyID, variableKey 
 	if variableKey != "" {
 		params["variable_key"] = variableKey
 	}
-	result, err := get[[]VariablePolicies](ctx, c, url, params)
+	result, err := c.Get[[]VariablePolicies](ctx, url, params)
 	if err != nil {
 		return nil, fmt.Errorf("get variable policies: %w", err)
 	}
@@ -186,7 +186,7 @@ func (c *Client) AssignVariablePolicy(ctx context.Context, req VariablePolicy) e
 	if err != nil {
 		return err
 	}
-	if _, err := post[struct{}](ctx, c, url, req); err != nil {
+	if _, err := c.Post[struct{}](ctx, url, req); err != nil {
 		return fmt.Errorf("assign variable policy: %w", err)
 	}
 	return nil
@@ -200,7 +200,7 @@ func (c *Client) RemoveVariablePolicy(ctx context.Context, policyID, variableKey
 		return err
 	}
 	params := map[string]string{"policy_id": policyID, "variable_key": variableKey}
-	if err := del(ctx, c, url, params); err != nil {
+	if err := c.Delete(ctx, url, params); err != nil {
 		return fmt.Errorf("remove variable policy: %w", err)
 	}
 	return nil
@@ -214,7 +214,7 @@ func (c *Client) GetVariablePolicyValue(ctx context.Context, variableKey, policy
 		return nil, err
 	}
 	params := map[string]string{"variable_key": variableKey, "policy_id": policyID}
-	result, err := get[VariableValueResponse](ctx, c, url, params)
+	result, err := c.Get[VariableValueResponse](ctx, url, params)
 	if err != nil {
 		return nil, fmt.Errorf("get variable policy value: %w", err)
 	}
@@ -223,7 +223,7 @@ func (c *Client) GetVariablePolicyValue(ctx context.Context, variableKey, policy
 
 // QueryVariables returns variables filtered by key (POST /oa/variables/query).
 func (c *Client) QueryVariables(ctx context.Context, req VariablesQueryRequest) (*VariablesQueryResponse, error) {
-	result, err := post[VariablesQueryResponse](ctx, c, c.url("oa/variables/query"), req)
+	result, err := c.Post[VariablesQueryResponse](ctx, c.url("oa/variables/query"), req)
 	if err != nil {
 		return nil, fmt.Errorf("query variables: %w", err)
 	}

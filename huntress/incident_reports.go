@@ -60,7 +60,7 @@ type incidentReportEnvelope struct {
 
 // ListIncidentReports returns a single page of incident reports.
 func (c *Client) ListIncidentReports(ctx context.Context, params map[string]string) (*IncidentReportsResponse, error) {
-	result, err := get[IncidentReportsResponse](ctx, c, endpointURL("incident_reports"), params)
+	result, err := c.Get[IncidentReportsResponse](ctx, endpointURL("incident_reports"), params)
 	if err != nil {
 		return nil, fmt.Errorf("list incident reports: %w", err)
 	}
@@ -69,7 +69,7 @@ func (c *Client) ListIncidentReports(ctx context.Context, params map[string]stri
 
 // GetIncidentReport returns a single incident report by ID.
 func (c *Client) GetIncidentReport(ctx context.Context, id int64) (*IncidentReport, error) {
-	result, err := get[incidentReportEnvelope](ctx, c, endpointURL(fmt.Sprintf("incident_reports/%d", id)), nil)
+	result, err := c.Get[incidentReportEnvelope](ctx, endpointURL(fmt.Sprintf("incident_reports/%d", id)), nil)
 	if err != nil {
 		return nil, fmt.Errorf("get incident report: %w", err)
 	}
@@ -78,7 +78,7 @@ func (c *Client) GetIncidentReport(ctx context.Context, id int64) (*IncidentRepo
 
 // ResolveIncidentReport resolves an incident report.
 func (c *Client) ResolveIncidentReport(ctx context.Context, id int64) (*IncidentReport, error) {
-	result, err := post[IncidentReport](ctx, c, endpointURL(fmt.Sprintf("incident_reports/%d/resolution", id)), nil)
+	result, err := c.Post[IncidentReport](ctx, endpointURL(fmt.Sprintf("incident_reports/%d/resolution", id)), nil)
 	if err != nil {
 		return nil, fmt.Errorf("resolve incident report: %w", err)
 	}
@@ -87,7 +87,7 @@ func (c *Client) ResolveIncidentReport(ctx context.Context, id int64) (*Incident
 
 // ListRemediations returns the remediations for an incident report.
 func (c *Client) ListRemediations(ctx context.Context, incidentReportID int64) ([]Remediation, error) {
-	result, err := get[[]Remediation](ctx, c, endpointURL(fmt.Sprintf("incident_reports/%d/remediations", incidentReportID)), nil)
+	result, err := c.Get[[]Remediation](ctx, endpointURL(fmt.Sprintf("incident_reports/%d/remediations", incidentReportID)), nil)
 	if err != nil {
 		return nil, fmt.Errorf("list remediations: %w", err)
 	}
@@ -96,7 +96,7 @@ func (c *Client) ListRemediations(ctx context.Context, incidentReportID int64) (
 
 // GetRemediation returns a single remediation for an incident report.
 func (c *Client) GetRemediation(ctx context.Context, incidentReportID, remediationID int64) (*Remediation, error) {
-	result, err := get[Remediation](ctx, c, endpointURL(fmt.Sprintf("incident_reports/%d/remediations/%d", incidentReportID, remediationID)), nil)
+	result, err := c.Get[Remediation](ctx, endpointURL(fmt.Sprintf("incident_reports/%d/remediations/%d", incidentReportID, remediationID)), nil)
 	if err != nil {
 		return nil, fmt.Errorf("get remediation: %w", err)
 	}
@@ -105,7 +105,7 @@ func (c *Client) GetRemediation(ctx context.Context, incidentReportID, remediati
 
 // ApproveRemediations approves all remediations on an incident report.
 func (c *Client) ApproveRemediations(ctx context.Context, incidentReportID int64) (*IncidentReport, error) {
-	result, err := post[IncidentReport](ctx, c, endpointURL(fmt.Sprintf("incident_reports/%d/remediations/bulk_approval", incidentReportID)), nil)
+	result, err := c.Post[IncidentReport](ctx, endpointURL(fmt.Sprintf("incident_reports/%d/remediations/bulk_approval", incidentReportID)), nil)
 	if err != nil {
 		return nil, fmt.Errorf("approve remediations: %w", err)
 	}
@@ -114,7 +114,7 @@ func (c *Client) ApproveRemediations(ctx context.Context, incidentReportID int64
 
 // RejectRemediations rejects all remediations on an incident report.
 func (c *Client) RejectRemediations(ctx context.Context, incidentReportID int64, body RemediationBulkRejectionParameters) error {
-	if _, err := post[struct{}](ctx, c, endpointURL(fmt.Sprintf("incident_reports/%d/remediations/bulk_rejection", incidentReportID)), body); err != nil {
+	if _, err := c.Post[struct{}](ctx, endpointURL(fmt.Sprintf("incident_reports/%d/remediations/bulk_rejection", incidentReportID)), body); err != nil {
 		return fmt.Errorf("reject remediations: %w", err)
 	}
 	return nil
@@ -123,7 +123,7 @@ func (c *Client) RejectRemediations(ctx context.Context, incidentReportID int64,
 // ListAccountIncidentReports returns a single page of incident reports for an
 // account (Reseller credentials only).
 func (c *Client) ListAccountIncidentReports(ctx context.Context, accountID int64, params map[string]string) (*IncidentReportsResponse, error) {
-	result, err := get[IncidentReportsResponse](ctx, c, endpointURL(fmt.Sprintf("accounts/%d/incident_reports", accountID)), params)
+	result, err := c.Get[IncidentReportsResponse](ctx, endpointURL(fmt.Sprintf("accounts/%d/incident_reports", accountID)), params)
 	if err != nil {
 		return nil, fmt.Errorf("list account incident reports: %w", err)
 	}
@@ -133,7 +133,7 @@ func (c *Client) ListAccountIncidentReports(ctx context.Context, accountID int64
 // GetAccountIncidentReport returns a single incident report for an account
 // (Reseller credentials only).
 func (c *Client) GetAccountIncidentReport(ctx context.Context, accountID, id int64) (*IncidentReport, error) {
-	result, err := get[incidentReportEnvelope](ctx, c, endpointURL(fmt.Sprintf("accounts/%d/incident_reports/%d", accountID, id)), nil)
+	result, err := c.Get[incidentReportEnvelope](ctx, endpointURL(fmt.Sprintf("accounts/%d/incident_reports/%d", accountID, id)), nil)
 	if err != nil {
 		return nil, fmt.Errorf("get account incident report: %w", err)
 	}
@@ -143,7 +143,7 @@ func (c *Client) GetAccountIncidentReport(ctx context.Context, accountID, id int
 // ResolveAccountIncidentReport resolves an incident report for an account
 // (Reseller credentials only).
 func (c *Client) ResolveAccountIncidentReport(ctx context.Context, accountID, id int64) (*IncidentReport, error) {
-	result, err := post[IncidentReport](ctx, c, endpointURL(fmt.Sprintf("accounts/%d/incident_reports/%d/resolution", accountID, id)), nil)
+	result, err := c.Post[IncidentReport](ctx, endpointURL(fmt.Sprintf("accounts/%d/incident_reports/%d/resolution", accountID, id)), nil)
 	if err != nil {
 		return nil, fmt.Errorf("resolve account incident report: %w", err)
 	}
@@ -153,7 +153,7 @@ func (c *Client) ResolveAccountIncidentReport(ctx context.Context, accountID, id
 // ListAccountRemediations returns the remediations for an account's incident
 // report (Reseller credentials only).
 func (c *Client) ListAccountRemediations(ctx context.Context, accountID, incidentReportID int64) ([]Remediation, error) {
-	result, err := get[[]Remediation](ctx, c, endpointURL(fmt.Sprintf("accounts/%d/incident_reports/%d/remediations", accountID, incidentReportID)), nil)
+	result, err := c.Get[[]Remediation](ctx, endpointURL(fmt.Sprintf("accounts/%d/incident_reports/%d/remediations", accountID, incidentReportID)), nil)
 	if err != nil {
 		return nil, fmt.Errorf("list account remediations: %w", err)
 	}
@@ -163,7 +163,7 @@ func (c *Client) ListAccountRemediations(ctx context.Context, accountID, inciden
 // GetAccountRemediation returns a single remediation for an account's incident
 // report (Reseller credentials only).
 func (c *Client) GetAccountRemediation(ctx context.Context, accountID, incidentReportID, remediationID int64) (*Remediation, error) {
-	result, err := get[Remediation](ctx, c, endpointURL(fmt.Sprintf("accounts/%d/incident_reports/%d/remediations/%d", accountID, incidentReportID, remediationID)), nil)
+	result, err := c.Get[Remediation](ctx, endpointURL(fmt.Sprintf("accounts/%d/incident_reports/%d/remediations/%d", accountID, incidentReportID, remediationID)), nil)
 	if err != nil {
 		return nil, fmt.Errorf("get account remediation: %w", err)
 	}
@@ -173,7 +173,7 @@ func (c *Client) GetAccountRemediation(ctx context.Context, accountID, incidentR
 // ApproveAccountRemediations approves all remediations on an account's incident
 // report (Reseller credentials only).
 func (c *Client) ApproveAccountRemediations(ctx context.Context, accountID, incidentReportID int64) (*IncidentReport, error) {
-	result, err := post[IncidentReport](ctx, c, endpointURL(fmt.Sprintf("accounts/%d/incident_reports/%d/remediations/bulk_approval", accountID, incidentReportID)), nil)
+	result, err := c.Post[IncidentReport](ctx, endpointURL(fmt.Sprintf("accounts/%d/incident_reports/%d/remediations/bulk_approval", accountID, incidentReportID)), nil)
 	if err != nil {
 		return nil, fmt.Errorf("approve account remediations: %w", err)
 	}
@@ -183,7 +183,7 @@ func (c *Client) ApproveAccountRemediations(ctx context.Context, accountID, inci
 // RejectAccountRemediations rejects all remediations on an account's incident
 // report (Reseller credentials only).
 func (c *Client) RejectAccountRemediations(ctx context.Context, accountID, incidentReportID int64, body RemediationBulkRejectionParameters) error {
-	if _, err := post[struct{}](ctx, c, endpointURL(fmt.Sprintf("accounts/%d/incident_reports/%d/remediations/bulk_rejection", accountID, incidentReportID)), body); err != nil {
+	if _, err := c.Post[struct{}](ctx, endpointURL(fmt.Sprintf("accounts/%d/incident_reports/%d/remediations/bulk_rejection", accountID, incidentReportID)), body); err != nil {
 		return fmt.Errorf("reject account remediations: %w", err)
 	}
 	return nil

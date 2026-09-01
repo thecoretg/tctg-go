@@ -15,7 +15,7 @@ type Package struct {
 
 // ListCustomerPackages lists the packages available to the trial customer.
 func (c *Client) ListCustomerPackages(ctx context.Context) ([]Package, error) {
-	result, err := get[[]Package](ctx, c, endpointURL("providers/customers/packages"), nil)
+	result, err := c.Get[[]Package](ctx, endpointURL("providers/customers/packages"), nil)
 	if err != nil {
 		return nil, fmt.Errorf("list customer packages: %w", err)
 	}

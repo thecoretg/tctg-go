@@ -14,7 +14,7 @@ var ErrNotFound = errors.New("404 status returned")
 // send issues one request and, when the response is a 401 the client can
 // recover from, logs in again and replays it exactly once. httpx.Do re-encodes
 // the body on every call, so a replay needs no buffering of its own.
-func send(ctx context.Context, c *Client, method, endpoint string, params map[string]string, body any) (*httpx.Response, error) {
+func (c *Client) send(ctx context.Context, method, endpoint string, params map[string]string, body any) (*httpx.Response, error) {
 	stale := c.currentToken()
 
 	res, err := httpx.Do(ctx, c.httpClient, method, c.fullURL(endpoint), params, body)
@@ -50,15 +50,16 @@ func decode[T any](res *httpx.Response) (*T, error) {
 	return &target, nil
 }
 
-func get[T any](ctx context.Context, c *Client, endpoint string, params map[string]string) (*T, error) {
-	target, _, err := getWithHeaders[T](ctx, c, endpoint, params)
+// Get issues a GET request and decodes the JSON response into T.
+func (c *Client) Get[T any](ctx context.Context, endpoint string, params map[string]string) (*T, error) {
+	target, _, err := c.getWithHeaders[T](ctx, endpoint, params)
 	return target, err
 }
 
-// getWithHeaders is get that also returns the response headers, used by the
+// getWithHeaders is Get that also returns the response headers, used by the
 // ListAll* pagination helpers to read Automate's Total-Count header.
-func getWithHeaders[T any](ctx context.Context, c *Client, endpoint string, params map[string]string) (*T, http.Header, error) {
-	res, err := send(ctx, c, http.MethodGet, endpoint, params, nil)
+func (c *Client) getWithHeaders[T any](ctx context.Context, endpoint string, params map[string]string) (*T, http.Header, error) {
+	res, err := c.send(ctx, http.MethodGet, endpoint, params, nil)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -73,8 +74,9 @@ func getWithHeaders[T any](ctx context.Context, c *Client, endpoint string, para
 	return target, res.Header, nil
 }
 
-func post[T any](ctx context.Context, c *Client, endpoint string, body any) (*T, error) {
-	res, err := send(ctx, c, http.MethodPost, endpoint, nil, body)
+// Post issues a POST request with body and decodes the JSON response into T.
+func (c *Client) Post[T any](ctx context.Context, endpoint string, body any) (*T, error) {
+	res, err := c.send(ctx, http.MethodPost, endpoint, nil, body)
 	if err != nil {
 		return nil, err
 	}
@@ -84,8 +86,9 @@ func post[T any](ctx context.Context, c *Client, endpoint string, body any) (*T,
 	return decode[T](res)
 }
 
-func put[T any](ctx context.Context, c *Client, endpoint string, body any) (*T, error) {
-	res, err := send(ctx, c, http.MethodPut, endpoint, nil, body)
+// Put issues a PUT request with body and decodes the JSON response into T.
+func (c *Client) Put[T any](ctx context.Context, endpoint string, body any) (*T, error) {
+	res, err := c.send(ctx, http.MethodPut, endpoint, nil, body)
 	if err != nil {
 		return nil, err
 	}
@@ -95,8 +98,9 @@ func put[T any](ctx context.Context, c *Client, endpoint string, body any) (*T, 
 	return decode[T](res)
 }
 
-func patch[T any](ctx context.Context, c *Client, endpoint string, patchOps []PatchOp) (*T, error) {
-	res, err := send(ctx, c, http.MethodPatch, endpoint, nil, patchOps)
+// Patch issues a PATCH request and decodes the JSON response into T.
+func (c *Client) Patch[T any](ctx context.Context, endpoint string, patchOps []PatchOp) (*T, error) {
+	res, err := c.send(ctx, http.MethodPatch, endpoint, nil, patchOps)
 	if err != nil {
 		return nil, err
 	}
@@ -106,18 +110,19 @@ func patch[T any](ctx context.Context, c *Client, endpoint string, patchOps []Pa
 	return decode[T](res)
 }
 
-func del(ctx context.Context, c *Client, endpoint string) error {
-	res, err := send(ctx, c, http.MethodDelete, endpoint, nil, nil)
+// Delete issues a DELETE request, discarding any response body.
+func (c *Client) Delete(ctx context.Context, endpoint string) error {
+	res, err := c.send(ctx, http.MethodDelete, endpoint, nil, nil)
 	if err != nil {
 		return err
 	}
 	return checkStatus(res)
 }
 
-// delReturn issues a DELETE for endpoints that return a body (e.g. resetting an
+// deleteReturn issues a DELETE for endpoints that return a body (e.g. resetting an
 // extra field returns the reset field).
-func delReturn[T any](ctx context.Context, c *Client, endpoint string) (*T, error) {
-	res, err := send(ctx, c, http.MethodDelete, endpoint, nil, nil)
+func (c *Client) deleteReturn[T any](ctx context.Context, endpoint string) (*T, error) {
+	res, err := c.send(ctx, http.MethodDelete, endpoint, nil, nil)
 	if err != nil {
 		return nil, err
 	}

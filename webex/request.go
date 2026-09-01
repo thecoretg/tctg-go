@@ -16,7 +16,8 @@ const (
 
 var ErrNotFound = errors.New("404 status returned")
 
-func get[T any](ctx context.Context, c *Client, endpoint string, params map[string]string) (*T, error) {
+// Get issues a GET request and decodes the JSON response into T.
+func (c *Client) Get[T any](ctx context.Context, endpoint string, params map[string]string) (*T, error) {
 	res, err := httpx.Do(ctx, c.httpClient, http.MethodGet, fullURL(baseURL, endpoint), params, nil)
 	if err != nil {
 		return nil, err
@@ -36,7 +37,9 @@ func get[T any](ctx context.Context, c *Client, endpoint string, params map[stri
 	return &target, nil
 }
 
-func getMany[T any](ctx context.Context, c *Client, endpoint string, params map[string]string) ([]T, error) {
+// GetMany issues GET requests, following the Link header until every page
+// has been collected.
+func (c *Client) GetMany[T any](ctx context.Context, endpoint string, params map[string]string) ([]T, error) {
 	var allItems []T
 
 	endpoint = fullURL(baseURL, endpoint)
@@ -66,7 +69,8 @@ func getMany[T any](ctx context.Context, c *Client, endpoint string, params map[
 	return allItems, nil
 }
 
-func post[T any](ctx context.Context, c *Client, endpoint string, body any) (*T, error) {
+// Post issues a POST request with body and decodes the JSON response into T.
+func (c *Client) Post[T any](ctx context.Context, endpoint string, body any) (*T, error) {
 	res, err := httpx.Do(ctx, c.httpClient, http.MethodPost, fullURL(baseURL, endpoint), nil, body)
 	if err != nil {
 		return nil, err
@@ -83,7 +87,8 @@ func post[T any](ctx context.Context, c *Client, endpoint string, body any) (*T,
 	return &target, nil
 }
 
-func put[T any](ctx context.Context, c *Client, endpoint string, body any) (*T, error) {
+// Put issues a PUT request with body and decodes the JSON response into T.
+func (c *Client) Put[T any](ctx context.Context, endpoint string, body any) (*T, error) {
 	res, err := httpx.Do(ctx, c.httpClient, http.MethodPut, fullURL(baseURL, endpoint), nil, body)
 	if err != nil {
 		return nil, err
@@ -103,7 +108,8 @@ func put[T any](ctx context.Context, c *Client, endpoint string, body any) (*T, 
 	return &target, nil
 }
 
-func del(ctx context.Context, c *Client, endpoint string) error {
+// Delete issues a DELETE request, discarding any response body.
+func (c *Client) Delete(ctx context.Context, endpoint string) error {
 	res, err := httpx.Do(ctx, c.httpClient, http.MethodDelete, fullURL(baseURL, endpoint), nil, nil)
 	if err != nil {
 		return err

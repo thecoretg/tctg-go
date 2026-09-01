@@ -80,7 +80,7 @@ func (c *Client) CreatePolicy(ctx context.Context, req CreatePolicyRequest) (*Po
 	if err != nil {
 		return nil, err
 	}
-	result, err := post[Policy](ctx, c, url, req)
+	result, err := c.Post[Policy](ctx, url, req)
 	if err != nil {
 		return nil, fmt.Errorf("create policy: %w", err)
 	}
@@ -93,7 +93,7 @@ func (c *Client) UpdatePolicy(ctx context.Context, req PolicyUpdateRequest) (*Po
 	if err != nil {
 		return nil, err
 	}
-	result, err := put[Policy](ctx, c, url, req)
+	result, err := c.Put[Policy](ctx, url, req)
 	if err != nil {
 		return nil, fmt.Errorf("update policy: %w", err)
 	}
@@ -106,7 +106,7 @@ func (c *Client) DeletePolicy(ctx context.Context, policyID string) error {
 	if err != nil {
 		return err
 	}
-	if err := del(ctx, c, url, map[string]string{"id": policyID}); err != nil {
+	if err := c.Delete(ctx, url, map[string]string{"id": policyID}); err != nil {
 		return fmt.Errorf("delete policy: %w", err)
 	}
 	return nil
@@ -118,7 +118,7 @@ func (c *Client) UpdatePolicyParent(ctx context.Context, req PolicyParentUpdateR
 	if err != nil {
 		return err
 	}
-	if _, err := put[struct{}](ctx, c, url, req); err != nil {
+	if _, err := c.Put[struct{}](ctx, url, req); err != nil {
 		return fmt.Errorf("update policy parent: %w", err)
 	}
 	return nil
@@ -130,7 +130,7 @@ func (c *Client) DeletePolicyParent(ctx context.Context, policyID string) error 
 	if err != nil {
 		return err
 	}
-	if err := del(ctx, c, url, map[string]string{"policy_id": policyID}); err != nil {
+	if err := c.Delete(ctx, url, map[string]string{"policy_id": policyID}); err != nil {
 		return fmt.Errorf("delete policy parent: %w", err)
 	}
 	return nil
@@ -139,7 +139,7 @@ func (c *Client) DeletePolicyParent(ctx context.Context, policyID string) error 
 // QueryPolicies returns policy info, optionally filtered by policy ID
 // (POST /oa/policies/query).
 func (c *Client) QueryPolicies(ctx context.Context, req PolicyQueryRequest) ([]Policy, error) {
-	result, err := post[[]Policy](ctx, c, c.url("oa/policies/query"), req)
+	result, err := c.Post[[]Policy](ctx, c.url("oa/policies/query"), req)
 	if err != nil {
 		return nil, fmt.Errorf("query policies: %w", err)
 	}

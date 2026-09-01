@@ -34,7 +34,7 @@ type DealUpdateRequest struct {
 func (c *Client) GetCustomerDeals(ctx context.Context, dealID string, ccoID int) ([]CustomerDeal, error) {
 	url := endpointURL(fmt.Sprintf("providers/customerDeals/%s", dealID))
 	params := map[string]string{"ccoId": strconv.Itoa(ccoID)}
-	result, err := get[[]CustomerDeal](ctx, c, url, params)
+	result, err := c.Get[[]CustomerDeal](ctx, url, params)
 	if err != nil {
 		return nil, fmt.Errorf("get customer deals: %w", err)
 	}
@@ -44,7 +44,7 @@ func (c *Client) GetCustomerDeals(ctx context.Context, dealID string, ccoID int)
 // UpdateCustomerDeals updates a customer deal by deal ID.
 func (c *Client) UpdateCustomerDeals(ctx context.Context, dealID string, body DealUpdateRequest) (*CustomerDeal, error) {
 	url := endpointURL(fmt.Sprintf("providers/customerDeals/%s", dealID))
-	result, err := put[CustomerDeal](ctx, c, url, body)
+	result, err := c.Put[CustomerDeal](ctx, url, body)
 	if err != nil {
 		return nil, fmt.Errorf("update customer deals: %w", err)
 	}

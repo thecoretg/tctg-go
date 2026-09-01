@@ -76,7 +76,7 @@ func (c *Client) SearchEndpoints(ctx context.Context, nebulaAccountID string, qu
 			body["next_cursor"] = cursor
 		}
 
-		result, err := post[endpointSearchResp](ctx, c, url, body)
+		result, err := c.Post[endpointSearchResp](ctx, url, body)
 		if err != nil {
 			return nil, fmt.Errorf("search endpoints: %w", err)
 		}

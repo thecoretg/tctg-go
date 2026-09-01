@@ -19,7 +19,7 @@ type Policy struct {
 // "page", "limit" (max 100), and "type" ("dns" or "web"; defaults to dns when
 // omitted).
 func (c *Client) ListPolicies(ctx context.Context, params map[string]string) ([]Policy, error) {
-	result, err := get[[]Policy](ctx, c, deploymentsURL("policies"), params)
+	result, err := c.Get[[]Policy](ctx, deploymentsURL("policies"), params)
 	if err != nil {
 		return nil, fmt.Errorf("list policies: %w", err)
 	}
@@ -31,7 +31,7 @@ func (c *Client) ListPolicies(ctx context.Context, params map[string]string) ([]
 // effect globally.
 func (c *Client) AddPolicyIdentity(ctx context.Context, policyID, originID int) (int, error) {
 	url := deploymentsURL(fmt.Sprintf("policies/%d/identities/%d", policyID, originID))
-	result, err := put[int](ctx, c, url, nil)
+	result, err := c.Put[int](ctx, url, nil)
 	if err != nil {
 		return 0, fmt.Errorf("add policy identity: %w", err)
 	}
@@ -42,7 +42,7 @@ func (c *Client) AddPolicyIdentity(ctx context.Context, policyID, originID int) 
 // changes may take up to 20 minutes to take effect globally.
 func (c *Client) DeletePolicyIdentity(ctx context.Context, policyID, originID int) error {
 	url := deploymentsURL(fmt.Sprintf("policies/%d/identities/%d", policyID, originID))
-	if err := del(ctx, c, url); err != nil {
+	if err := c.Delete(ctx, url); err != nil {
 		return fmt.Errorf("delete policy identity: %w", err)
 	}
 	return nil

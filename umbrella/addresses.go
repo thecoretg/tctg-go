@@ -22,7 +22,7 @@ type CustomerAddress struct {
 // ListCustomerAddresses lists a single page of customer addresses for the
 // provider. Supported params are "page" and "limit" (max 100).
 func (c *Client) ListCustomerAddresses(ctx context.Context, params map[string]string) ([]CustomerAddress, error) {
-	result, err := get[[]CustomerAddress](ctx, c, endpointURL("providers/customerAddresses"), params)
+	result, err := c.Get[[]CustomerAddress](ctx, endpointURL("providers/customerAddresses"), params)
 	if err != nil {
 		return nil, fmt.Errorf("list customer addresses: %w", err)
 	}

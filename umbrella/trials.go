@@ -75,9 +75,9 @@ type TrialStrength struct {
 func (c *Client) PutTrialConversion(ctx context.Context, customerID, packageID int) (string, error) {
 	url := endpointURL(fmt.Sprintf("providers/customers/%d/trialconversions", customerID))
 	body := map[string]int{"packageId": packageID}
-	result, err := put[struct {
+	result, err := c.Put[struct {
 		ConversionStatus string `json:"conversionStatus"`
-	}](ctx, c, url, body)
+	}](ctx, url, body)
 	if err != nil {
 		return "", fmt.Errorf("put trial conversion: %w", err)
 	}
@@ -89,7 +89,7 @@ func (c *Client) PutTrialConversion(ctx context.Context, customerID, packageID i
 func (c *Client) CreateTrialExtension(ctx context.Context, customerID, days int) (*CustomerSubscription, error) {
 	url := endpointURL(fmt.Sprintf("providers/customers/%d/trialExtensions", customerID))
 	body := map[string]int{"trialExtensionDays": days}
-	result, err := post[CustomerSubscription](ctx, c, url, body)
+	result, err := c.Post[CustomerSubscription](ctx, url, body)
 	if err != nil {
 		return nil, fmt.Errorf("create trial extension: %w", err)
 	}
@@ -99,7 +99,7 @@ func (c *Client) CreateTrialExtension(ctx context.Context, customerID, days int)
 // GetSubscriptionDetails gets the subscription details for the customer's organization.
 func (c *Client) GetSubscriptionDetails(ctx context.Context, customerID int) (*CustomerSubscription, error) {
 	url := endpointURL(fmt.Sprintf("providers/customers/%d/subscriptionDetails", customerID))
-	result, err := get[CustomerSubscription](ctx, c, url, nil)
+	result, err := c.Get[CustomerSubscription](ctx, url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("get subscription details: %w", err)
 	}
@@ -109,7 +109,7 @@ func (c *Client) GetSubscriptionDetails(ctx context.Context, customerID int) (*C
 // GetTrialStrength gets the strength of a customer trial.
 func (c *Client) GetTrialStrength(ctx context.Context, customerID int) (*TrialStrength, error) {
 	url := endpointURL(fmt.Sprintf("providers/customers/%d/trialStrengths", customerID))
-	result, err := get[TrialStrength](ctx, c, url, nil)
+	result, err := c.Get[TrialStrength](ctx, url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("get trial strength: %w", err)
 	}

@@ -50,7 +50,7 @@ type AccountsResponse struct {
 
 // GetAccount returns the account associated with the API credentials.
 func (c *Client) GetAccount(ctx context.Context) (*Account, error) {
-	result, err := get[Account](ctx, c, endpointURL("account"), nil)
+	result, err := c.Get[Account](ctx, endpointURL("account"), nil)
 	if err != nil {
 		return nil, fmt.Errorf("get account: %w", err)
 	}
@@ -59,7 +59,7 @@ func (c *Client) GetAccount(ctx context.Context) (*Account, error) {
 
 // ListAccounts returns a single page of accounts (Reseller credentials only).
 func (c *Client) ListAccounts(ctx context.Context, params map[string]string) (*AccountsResponse, error) {
-	result, err := get[AccountsResponse](ctx, c, endpointURL("accounts"), params)
+	result, err := c.Get[AccountsResponse](ctx, endpointURL("accounts"), params)
 	if err != nil {
 		return nil, fmt.Errorf("list accounts: %w", err)
 	}
@@ -68,7 +68,7 @@ func (c *Client) ListAccounts(ctx context.Context, params map[string]string) (*A
 
 // CreateAccount creates an account (Reseller credentials only).
 func (c *Client) CreateAccount(ctx context.Context, body AccountCreationParameters) (*Account, error) {
-	result, err := post[Account](ctx, c, endpointURL("accounts"), body)
+	result, err := c.Post[Account](ctx, endpointURL("accounts"), body)
 	if err != nil {
 		return nil, fmt.Errorf("create account: %w", err)
 	}
@@ -77,7 +77,7 @@ func (c *Client) CreateAccount(ctx context.Context, body AccountCreationParamete
 
 // GetAccountByID returns a single account by ID (Reseller credentials only).
 func (c *Client) GetAccountByID(ctx context.Context, accountID int64) (*Account, error) {
-	result, err := get[Account](ctx, c, endpointURL(fmt.Sprintf("accounts/%d", accountID)), nil)
+	result, err := c.Get[Account](ctx, endpointURL(fmt.Sprintf("accounts/%d", accountID)), nil)
 	if err != nil {
 		return nil, fmt.Errorf("get account: %w", err)
 	}
@@ -86,7 +86,7 @@ func (c *Client) GetAccountByID(ctx context.Context, accountID int64) (*Account,
 
 // UpdateAccount updates an account (Reseller credentials only).
 func (c *Client) UpdateAccount(ctx context.Context, accountID int64, body AccountUpdateParameters) (*Account, error) {
-	result, err := patch[Account](ctx, c, endpointURL(fmt.Sprintf("accounts/%d", accountID)), body)
+	result, err := c.Patch[Account](ctx, endpointURL(fmt.Sprintf("accounts/%d", accountID)), body)
 	if err != nil {
 		return nil, fmt.Errorf("update account: %w", err)
 	}
@@ -95,7 +95,7 @@ func (c *Client) UpdateAccount(ctx context.Context, accountID int64, body Accoun
 
 // DeleteAccount deletes an account (Reseller credentials only).
 func (c *Client) DeleteAccount(ctx context.Context, accountID int64) error {
-	if err := del(ctx, c, endpointURL(fmt.Sprintf("accounts/%d", accountID))); err != nil {
+	if err := c.Delete(ctx, endpointURL(fmt.Sprintf("accounts/%d", accountID))); err != nil {
 		return fmt.Errorf("delete account: %w", err)
 	}
 	return nil

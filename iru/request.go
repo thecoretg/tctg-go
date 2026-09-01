@@ -10,7 +10,8 @@ import (
 
 var ErrNotFound = fmt.Errorf("404 status returned")
 
-func Get[T any](ctx context.Context, c *Client, path string, params map[string]string) (*T, error) {
+// Get issues a GET request and decodes the JSON response into T.
+func (c *Client) Get[T any](ctx context.Context, path string, params map[string]string) (*T, error) {
 	res, err := httpx.Do(ctx, c.httpClient, http.MethodGet, c.baseURL+path, params, nil)
 	if err != nil {
 		return nil, err
@@ -29,7 +30,8 @@ func Get[T any](ctx context.Context, c *Client, path string, params map[string]s
 	return &target, nil
 }
 
-func Post[T any](ctx context.Context, c *Client, path string, body any) (*T, error) {
+// Post issues a POST request with body and decodes the JSON response into T.
+func (c *Client) Post[T any](ctx context.Context, path string, body any) (*T, error) {
 	res, err := httpx.Do(ctx, c.httpClient, http.MethodPost, c.baseURL+path, nil, body)
 	if err != nil {
 		return nil, err
@@ -45,7 +47,8 @@ func Post[T any](ctx context.Context, c *Client, path string, body any) (*T, err
 	return &target, nil
 }
 
-func Patch[T any](ctx context.Context, c *Client, path string, body any) (*T, error) {
+// Patch issues a PATCH request and decodes the JSON response into T.
+func (c *Client) Patch[T any](ctx context.Context, path string, body any) (*T, error) {
 	res, err := httpx.Do(ctx, c.httpClient, http.MethodPatch, c.baseURL+path, nil, body)
 	if err != nil {
 		return nil, err
@@ -61,7 +64,8 @@ func Patch[T any](ctx context.Context, c *Client, path string, body any) (*T, er
 	return &target, nil
 }
 
-func Delete(ctx context.Context, c *Client, path string) error {
+// Delete issues a DELETE request, discarding any response body.
+func (c *Client) Delete(ctx context.Context, path string) error {
 	res, err := httpx.Do(ctx, c.httpClient, http.MethodDelete, c.baseURL+path, nil, nil)
 	if err != nil {
 		return err

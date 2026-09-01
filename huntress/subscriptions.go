@@ -71,7 +71,7 @@ type subscriptionEnvelope struct {
 // ListSubscriptions returns a single page of reseller subscriptions (Reseller
 // credentials only).
 func (c *Client) ListSubscriptions(ctx context.Context, params map[string]string) (*SubscriptionsResponse, error) {
-	result, err := get[SubscriptionsResponse](ctx, c, endpointURL("reseller/subscriptions"), params)
+	result, err := c.Get[SubscriptionsResponse](ctx, endpointURL("reseller/subscriptions"), params)
 	if err != nil {
 		return nil, fmt.Errorf("list subscriptions: %w", err)
 	}
@@ -80,7 +80,7 @@ func (c *Client) ListSubscriptions(ctx context.Context, params map[string]string
 
 // CreateSubscription creates a reseller subscription (Reseller credentials only).
 func (c *Client) CreateSubscription(ctx context.Context, body SubscriptionCreationParameters) (*Subscription, error) {
-	result, err := post[Subscription](ctx, c, endpointURL("reseller/subscriptions"), body)
+	result, err := c.Post[Subscription](ctx, endpointURL("reseller/subscriptions"), body)
 	if err != nil {
 		return nil, fmt.Errorf("create subscription: %w", err)
 	}
@@ -90,7 +90,7 @@ func (c *Client) CreateSubscription(ctx context.Context, body SubscriptionCreati
 // GetSubscription returns a single reseller subscription by ID (Reseller
 // credentials only).
 func (c *Client) GetSubscription(ctx context.Context, id int64) (*Subscription, error) {
-	result, err := get[subscriptionEnvelope](ctx, c, endpointURL(fmt.Sprintf("reseller/subscriptions/%d", id)), nil)
+	result, err := c.Get[subscriptionEnvelope](ctx, endpointURL(fmt.Sprintf("reseller/subscriptions/%d", id)), nil)
 	if err != nil {
 		return nil, fmt.Errorf("get subscription: %w", err)
 	}
@@ -99,7 +99,7 @@ func (c *Client) GetSubscription(ctx context.Context, id int64) (*Subscription, 
 
 // UpdateSubscription updates a reseller subscription (Reseller credentials only).
 func (c *Client) UpdateSubscription(ctx context.Context, id int64, body SubscriptionUpdateParameters) (*Subscription, error) {
-	result, err := patch[Subscription](ctx, c, endpointURL(fmt.Sprintf("reseller/subscriptions/%d", id)), body)
+	result, err := c.Patch[Subscription](ctx, endpointURL(fmt.Sprintf("reseller/subscriptions/%d", id)), body)
 	if err != nil {
 		return nil, fmt.Errorf("update subscription: %w", err)
 	}
@@ -108,7 +108,7 @@ func (c *Client) UpdateSubscription(ctx context.Context, id int64, body Subscrip
 
 // UpgradeSubscription upgrades a reseller subscription (Reseller credentials only).
 func (c *Client) UpgradeSubscription(ctx context.Context, id int64, body SubscriptionUpgradeParameters) (*Subscription, error) {
-	result, err := post[Subscription](ctx, c, endpointURL(fmt.Sprintf("reseller/subscriptions/%d/upgrade", id)), body)
+	result, err := c.Post[Subscription](ctx, endpointURL(fmt.Sprintf("reseller/subscriptions/%d/upgrade", id)), body)
 	if err != nil {
 		return nil, fmt.Errorf("upgrade subscription: %w", err)
 	}

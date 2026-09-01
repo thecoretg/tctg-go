@@ -83,7 +83,7 @@ func (c *Client) SearchDevices(ctx context.Context, filter DeviceFilter) (*Devic
 	if err != nil {
 		return nil, err
 	}
-	result, err := post[DeviceAuditResponse](ctx, c, url, filter)
+	result, err := c.Post[DeviceAuditResponse](ctx, url, filter)
 	if err != nil {
 		return nil, fmt.Errorf("search devices: %w", err)
 	}
@@ -97,7 +97,7 @@ func (c *Client) AssignDevices(ctx context.Context, req AssignRequest) error {
 	if err != nil {
 		return err
 	}
-	if _, err := post[struct{}](ctx, c, url, req); err != nil {
+	if _, err := c.Post[struct{}](ctx, url, req); err != nil {
 		return fmt.Errorf("assign devices: %w", err)
 	}
 	return nil
@@ -110,7 +110,7 @@ func (c *Client) UnassignDevices(ctx context.Context, req AssignRequest) error {
 	if err != nil {
 		return err
 	}
-	if _, err := post[struct{}](ctx, c, url, req); err != nil {
+	if _, err := c.Post[struct{}](ctx, url, req); err != nil {
 		return fmt.Errorf("unassign devices: %w", err)
 	}
 	return nil
@@ -123,7 +123,7 @@ func (c *Client) GetDevicePolicyAssignments(ctx context.Context, agentID string)
 	if err != nil {
 		return nil, err
 	}
-	result, err := get[[]string](ctx, c, url, nil)
+	result, err := c.Get[[]string](ctx, url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("get device policy assignments: %w", err)
 	}
@@ -137,7 +137,7 @@ func (c *Client) GetManagedUsers(ctx context.Context, agentID string) ([]Managed
 	if err != nil {
 		return nil, err
 	}
-	result, err := get[[]ManagedUser](ctx, c, url, nil)
+	result, err := c.Get[[]ManagedUser](ctx, url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("get managed users: %w", err)
 	}
@@ -152,7 +152,7 @@ func (c *Client) RotateManagedUserPassword(ctx context.Context, agentID, account
 		return nil, err
 	}
 	body := map[string]string{"accountName": accountName}
-	result, err := patch[ManagedUser](ctx, c, url, body)
+	result, err := c.Patch[ManagedUser](ctx, url, body)
 	if err != nil {
 		return nil, fmt.Errorf("rotate managed user password: %w", err)
 	}
@@ -166,7 +166,7 @@ func (c *Client) RevealManagedUserPassword(ctx context.Context, agentID, account
 	if err != nil {
 		return nil, err
 	}
-	result, err := get[ManagedUser](ctx, c, url, nil)
+	result, err := c.Get[ManagedUser](ctx, url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("reveal managed user password: %w", err)
 	}
@@ -180,7 +180,7 @@ func (c *Client) RemoveDevice(ctx context.Context, serialNumber string) error {
 	if err != nil {
 		return err
 	}
-	if err := del(ctx, c, url, nil); err != nil {
+	if err := c.Delete(ctx, url, nil); err != nil {
 		return fmt.Errorf("remove device: %w", err)
 	}
 	return nil

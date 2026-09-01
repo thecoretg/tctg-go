@@ -36,7 +36,7 @@ type IdentitiesResponse struct {
 
 // ListIdentities returns a single page of identities.
 func (c *Client) ListIdentities(ctx context.Context, params map[string]string) (*IdentitiesResponse, error) {
-	result, err := get[IdentitiesResponse](ctx, c, endpointURL("identities"), params)
+	result, err := c.Get[IdentitiesResponse](ctx, endpointURL("identities"), params)
 	if err != nil {
 		return nil, fmt.Errorf("list identities: %w", err)
 	}
@@ -45,7 +45,7 @@ func (c *Client) ListIdentities(ctx context.Context, params map[string]string) (
 
 // GetIdentity returns a single identity by ID.
 func (c *Client) GetIdentity(ctx context.Context, id int64) (*Identity, error) {
-	result, err := get[Identity](ctx, c, endpointURL(fmt.Sprintf("identities/%d", id)), nil)
+	result, err := c.Get[Identity](ctx, endpointURL(fmt.Sprintf("identities/%d", id)), nil)
 	if err != nil {
 		return nil, fmt.Errorf("get identity: %w", err)
 	}

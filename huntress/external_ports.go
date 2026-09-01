@@ -30,7 +30,7 @@ type externalPortEnvelope struct {
 
 // ListExternalPorts returns a single page of external ports.
 func (c *Client) ListExternalPorts(ctx context.Context, params map[string]string) (*ExternalPortsResponse, error) {
-	result, err := get[ExternalPortsResponse](ctx, c, endpointURL("external_ports"), params)
+	result, err := c.Get[ExternalPortsResponse](ctx, endpointURL("external_ports"), params)
 	if err != nil {
 		return nil, fmt.Errorf("list external ports: %w", err)
 	}
@@ -39,7 +39,7 @@ func (c *Client) ListExternalPorts(ctx context.Context, params map[string]string
 
 // GetExternalPort returns a single external port by ID.
 func (c *Client) GetExternalPort(ctx context.Context, id int64) (*ExternalPort, error) {
-	result, err := get[externalPortEnvelope](ctx, c, endpointURL(fmt.Sprintf("external_ports/%d", id)), nil)
+	result, err := c.Get[externalPortEnvelope](ctx, endpointURL(fmt.Sprintf("external_ports/%d", id)), nil)
 	if err != nil {
 		return nil, fmt.Errorf("get external port: %w", err)
 	}
@@ -49,7 +49,7 @@ func (c *Client) GetExternalPort(ctx context.Context, id int64) (*ExternalPort, 
 // ListAccountExternalPorts returns a single page of external ports for an account
 // (Reseller credentials only).
 func (c *Client) ListAccountExternalPorts(ctx context.Context, accountID int64, params map[string]string) (*ExternalPortsResponse, error) {
-	result, err := get[ExternalPortsResponse](ctx, c, endpointURL(fmt.Sprintf("accounts/%d/external_ports", accountID)), params)
+	result, err := c.Get[ExternalPortsResponse](ctx, endpointURL(fmt.Sprintf("accounts/%d/external_ports", accountID)), params)
 	if err != nil {
 		return nil, fmt.Errorf("list account external ports: %w", err)
 	}
@@ -59,7 +59,7 @@ func (c *Client) ListAccountExternalPorts(ctx context.Context, accountID int64, 
 // GetAccountExternalPort returns a single external port for an account (Reseller
 // credentials only).
 func (c *Client) GetAccountExternalPort(ctx context.Context, accountID, id int64) (*ExternalPort, error) {
-	result, err := get[externalPortEnvelope](ctx, c, endpointURL(fmt.Sprintf("accounts/%d/external_ports/%d", accountID, id)), nil)
+	result, err := c.Get[externalPortEnvelope](ctx, endpointURL(fmt.Sprintf("accounts/%d/external_ports/%d", accountID, id)), nil)
 	if err != nil {
 		return nil, fmt.Errorf("get account external port: %w", err)
 	}

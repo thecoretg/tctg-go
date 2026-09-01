@@ -42,73 +42,73 @@ func boardIDItemIDEndpoint(boardID, itemID int) string {
 }
 
 func (c *Client) PostBoard(ctx context.Context, board *Board) (*Board, error) {
-	return post[Board](ctx, c, "service/boards", board)
+	return c.Post[Board](ctx, "service/boards", board)
 }
 
 func (c *Client) ListBoards(ctx context.Context, params map[string]string, opts ...ListOption) ([]Board, error) {
-	return getMany[Board](ctx, c, "service/boards", params, opts...)
+	return c.GetMany[Board](ctx, "service/boards", params, opts...)
 }
 
 func (c *Client) GetBoard(ctx context.Context, boardID int, params map[string]string) (*Board, error) {
-	return get[Board](ctx, c, boardIDEndpoint(boardID), params)
+	return c.Get[Board](ctx, boardIDEndpoint(boardID), params)
 }
 
 func (c *Client) PutBoard(ctx context.Context, boardID int, board *Board) (*Board, error) {
-	return put[Board](ctx, c, boardIDEndpoint(boardID), board)
+	return c.Put[Board](ctx, boardIDEndpoint(boardID), board)
 }
 
 func (c *Client) PatchBoard(ctx context.Context, boardID int, patchOps []PatchOp) (*Board, error) {
-	return patch[Board](ctx, c, boardIDEndpoint(boardID), patchOps)
+	return c.Patch[Board](ctx, boardIDEndpoint(boardID), patchOps)
 }
 
 func (c *Client) DeleteBoard(ctx context.Context, boardID int) error {
-	return del(ctx, c, boardIDEndpoint(boardID))
+	return c.Delete(ctx, boardIDEndpoint(boardID))
 }
 
 func (c *Client) PostBoardStatus(ctx context.Context, boardStatus *BoardStatus, boardID int) (*BoardStatus, error) {
-	return post[BoardStatus](ctx, c, boardIDStatusEndpoint(boardID), boardStatus)
+	return c.Post[BoardStatus](ctx, boardIDStatusEndpoint(boardID), boardStatus)
 }
 
 func (c *Client) ListBoardStatuses(ctx context.Context, params map[string]string, boardID int, opts ...ListOption) ([]BoardStatus, error) {
-	return getMany[BoardStatus](ctx, c, boardIDStatusEndpoint(boardID), params, opts...)
+	return c.GetMany[BoardStatus](ctx, boardIDStatusEndpoint(boardID), params, opts...)
 }
 
 func (c *Client) GetBoardStatus(ctx context.Context, statusID int, params map[string]string, boardID int) (*BoardStatus, error) {
-	return get[BoardStatus](ctx, c, boardIDStatusIDEndpoint(boardID, statusID), params)
+	return c.Get[BoardStatus](ctx, boardIDStatusIDEndpoint(boardID, statusID), params)
 }
 
 func (c *Client) PutBoardStatus(ctx context.Context, statusID int, boardStatus *BoardStatus, boardID int) (*BoardStatus, error) {
-	return put[BoardStatus](ctx, c, boardIDStatusIDEndpoint(boardID, statusID), boardStatus)
+	return c.Put[BoardStatus](ctx, boardIDStatusIDEndpoint(boardID, statusID), boardStatus)
 }
 
 func (c *Client) PatchBoardStatus(ctx context.Context, statusID int, patchOps []PatchOp, boardID int) (*BoardStatus, error) {
-	return patch[BoardStatus](ctx, c, boardIDStatusIDEndpoint(boardID, statusID), patchOps)
+	return c.Patch[BoardStatus](ctx, boardIDStatusIDEndpoint(boardID, statusID), patchOps)
 }
 
 func (c *Client) DeleteBoardStatus(ctx context.Context, statusID int, boardID int) error {
-	return del(ctx, c, boardIDStatusIDEndpoint(boardID, statusID))
+	return c.Delete(ctx, boardIDStatusIDEndpoint(boardID, statusID))
 }
 
 func (c *Client) ListBoardTypes(ctx context.Context, params map[string]string, boardID int, opts ...ListOption) ([]BoardType, error) {
-	return getMany[BoardType](ctx, c, boardIDTypeEndpoint(boardID), params, opts...)
+	return c.GetMany[BoardType](ctx, boardIDTypeEndpoint(boardID), params, opts...)
 }
 
 func (c *Client) GetBoardType(ctx context.Context, typeID int, params map[string]string, boardID int) (*BoardType, error) {
-	return get[BoardType](ctx, c, boardIDTypeIDEndpoint(boardID, typeID), params)
+	return c.Get[BoardType](ctx, boardIDTypeIDEndpoint(boardID, typeID), params)
 }
 
 func (c *Client) ListBoardSubTypes(ctx context.Context, params map[string]string, boardID int, opts ...ListOption) ([]BoardSubType, error) {
-	return getMany[BoardSubType](ctx, c, boardIDSubTypeEndpoint(boardID), params, opts...)
+	return c.GetMany[BoardSubType](ctx, boardIDSubTypeEndpoint(boardID), params, opts...)
 }
 
 func (c *Client) GetBoardSubType(ctx context.Context, subTypeID int, params map[string]string, boardID int) (*BoardSubType, error) {
-	return get[BoardSubType](ctx, c, boardIDSubTypeIDEndpoint(boardID, subTypeID), params)
+	return c.Get[BoardSubType](ctx, boardIDSubTypeIDEndpoint(boardID, subTypeID), params)
 }
 
 func (c *Client) ListBoardItems(ctx context.Context, params map[string]string, boardID int, opts ...ListOption) ([]BoardItem, error) {
-	return getMany[BoardItem](ctx, c, boardIDItemEndpoint(boardID), params, opts...)
+	return c.GetMany[BoardItem](ctx, boardIDItemEndpoint(boardID), params, opts...)
 }
 
 func (c *Client) GetBoardItem(ctx context.Context, itemID int, params map[string]string, boardID int) (*BoardItem, error) {
-	return get[BoardItem](ctx, c, boardIDItemIDEndpoint(boardID, itemID), params)
+	return c.Get[BoardItem](ctx, boardIDItemIDEndpoint(boardID, itemID), params)
 }

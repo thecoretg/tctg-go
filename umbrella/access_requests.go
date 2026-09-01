@@ -20,7 +20,7 @@ type AccessRequest struct {
 // CreateAccessRequest creates an access request for the customer's organization.
 func (c *Client) CreateAccessRequest(ctx context.Context, customerID int) (*AccessRequest, error) {
 	url := endpointURL(fmt.Sprintf("providers/customers/%d/accessRequests", customerID))
-	result, err := post[AccessRequest](ctx, c, url, nil)
+	result, err := c.Post[AccessRequest](ctx, url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("create access request: %w", err)
 	}
@@ -30,7 +30,7 @@ func (c *Client) CreateAccessRequest(ctx context.Context, customerID int) (*Acce
 // GetAccessRequest gets the access request details for the customer's organization.
 func (c *Client) GetAccessRequest(ctx context.Context, customerID, accessRequestID int) (*AccessRequest, error) {
 	url := endpointURL(fmt.Sprintf("providers/customers/%d/accessRequests/%d", customerID, accessRequestID))
-	result, err := get[AccessRequest](ctx, c, url, nil)
+	result, err := c.Get[AccessRequest](ctx, url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("get access request: %w", err)
 	}
@@ -40,7 +40,7 @@ func (c *Client) GetAccessRequest(ctx context.Context, customerID, accessRequest
 // UpdateAccessRequest updates the access request for the customer's organization.
 func (c *Client) UpdateAccessRequest(ctx context.Context, customerID, accessRequestID int) (*AccessRequest, error) {
 	url := endpointURL(fmt.Sprintf("providers/customers/%d/accessRequests/%d", customerID, accessRequestID))
-	result, err := put[AccessRequest](ctx, c, url, nil)
+	result, err := c.Put[AccessRequest](ctx, url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("update access request: %w", err)
 	}

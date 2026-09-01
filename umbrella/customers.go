@@ -71,7 +71,7 @@ type CustomerUpdateRequest struct {
 
 // CreateCustomer creates a customer for the provider.
 func (c *Client) CreateCustomer(ctx context.Context, body CustomerCreateRequest) (*Customer, error) {
-	result, err := post[Customer](ctx, c, endpointURL("providers/customers"), body)
+	result, err := c.Post[Customer](ctx, endpointURL("providers/customers"), body)
 	if err != nil {
 		return nil, fmt.Errorf("create customer: %w", err)
 	}
@@ -81,7 +81,7 @@ func (c *Client) CreateCustomer(ctx context.Context, body CustomerCreateRequest)
 // ListCustomers lists a single page of customers for the provider. Supported
 // params are "page" and "limit" (max 100).
 func (c *Client) ListCustomers(ctx context.Context, params map[string]string) ([]Customer, error) {
-	result, err := get[[]Customer](ctx, c, endpointURL("providers/customers"), params)
+	result, err := c.Get[[]Customer](ctx, endpointURL("providers/customers"), params)
 	if err != nil {
 		return nil, fmt.Errorf("list customers: %w", err)
 	}
@@ -90,7 +90,7 @@ func (c *Client) ListCustomers(ctx context.Context, params map[string]string) ([
 
 // GetCustomer gets a customer for the provider by ID.
 func (c *Client) GetCustomer(ctx context.Context, customerID int) (*Customer, error) {
-	result, err := get[Customer](ctx, c, endpointURL(fmt.Sprintf("providers/customers/%d", customerID)), nil)
+	result, err := c.Get[Customer](ctx, endpointURL(fmt.Sprintf("providers/customers/%d", customerID)), nil)
 	if err != nil {
 		return nil, fmt.Errorf("get customer: %w", err)
 	}
@@ -99,7 +99,7 @@ func (c *Client) GetCustomer(ctx context.Context, customerID int) (*Customer, er
 
 // UpdateCustomer updates a customer for the provider by ID.
 func (c *Client) UpdateCustomer(ctx context.Context, customerID int, body CustomerUpdateRequest) (*Customer, error) {
-	result, err := put[Customer](ctx, c, endpointURL(fmt.Sprintf("providers/customers/%d", customerID)), body)
+	result, err := c.Put[Customer](ctx, endpointURL(fmt.Sprintf("providers/customers/%d", customerID)), body)
 	if err != nil {
 		return nil, fmt.Errorf("update customer: %w", err)
 	}
@@ -108,7 +108,7 @@ func (c *Client) UpdateCustomer(ctx context.Context, customerID int, body Custom
 
 // DeleteCustomer deletes a customer for the provider by ID.
 func (c *Client) DeleteCustomer(ctx context.Context, customerID int) error {
-	if err := del(ctx, c, endpointURL(fmt.Sprintf("providers/customers/%d", customerID))); err != nil {
+	if err := c.Delete(ctx, endpointURL(fmt.Sprintf("providers/customers/%d", customerID))); err != nil {
 		return fmt.Errorf("delete customer: %w", err)
 	}
 	return nil

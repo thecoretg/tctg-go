@@ -38,7 +38,7 @@ func newTestClient(t *testing.T) *Client {
 func TestQuery(t *testing.T) {
 	c := newTestClient(t)
 
-	records, err := Query[map[string]any](context.Background(), c,
+	records, err := c.Query[map[string]any](context.Background(),
 		"SELECT Id, Name, Phone, Support_Agreement__c FROM Account",
 	)
 	if err != nil {
@@ -52,7 +52,7 @@ func TestQuery(t *testing.T) {
 func TestQueryRecordsIntegration(t *testing.T) {
 	c := newTestClient(t)
 
-	records, err := QueryRecords(context.Background(), c,
+	records, err := c.QueryRecords(context.Background(),
 		"SELECT Id, Name, Phone, Support_Agreement__c FROM Account WHERE Type = 'Customer'",
 	)
 	if err != nil {
@@ -213,7 +213,7 @@ func TestQueryPagination(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	records, err := Query[map[string]any](context.Background(), newStubClient(srv), "SELECT Id FROM Account")
+	records, err := newStubClient(srv).Query[map[string]any](context.Background(), "SELECT Id FROM Account")
 	if err != nil {
 		t.Fatalf("Query: %v", err)
 	}
@@ -264,7 +264,7 @@ func TestQueryRecordsNormalizes(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	got, err := QueryRecords(context.Background(), newStubClient(srv), "SELECT Id FROM Account")
+	got, err := newStubClient(srv).QueryRecords(context.Background(), "SELECT Id FROM Account")
 	if err != nil {
 		t.Fatalf("QueryRecords: %v", err)
 	}
@@ -285,7 +285,7 @@ func TestQueryEmptyResult(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	records, err := QueryRecords(context.Background(), newStubClient(srv), "SELECT Id FROM Account")
+	records, err := newStubClient(srv).QueryRecords(context.Background(), "SELECT Id FROM Account")
 	if err != nil {
 		t.Fatalf("QueryRecords: %v", err)
 	}
@@ -316,13 +316,13 @@ func TestQueryErrors(t *testing.T) {
 			defer srv.Close()
 
 			c := newStubClient(srv)
-			if _, err := Query[map[string]any](context.Background(), c, "SELECT Id FROM Account"); err == nil {
+			if _, err := c.Query[map[string]any](context.Background(), "SELECT Id FROM Account"); err == nil {
 				t.Fatal("Query: expected error, got nil")
 			} else if tt.wantErr != nil && !errors.Is(err, tt.wantErr) {
 				t.Fatalf("Query: got %v, want %v", err, tt.wantErr)
 			}
 
-			if _, err := QueryRecords(context.Background(), c, "SELECT Id FROM Account"); err == nil {
+			if _, err := c.QueryRecords(context.Background(), "SELECT Id FROM Account"); err == nil {
 				t.Fatal("QueryRecords: expected error, got nil")
 			}
 		})
@@ -341,7 +341,7 @@ func TestQueryPropagatesCancellation(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
-	if _, err := Query[map[string]any](ctx, newStubClient(srv), "SELECT Id FROM Account"); !errors.Is(err, context.Canceled) {
+	if _, err := newStubClient(srv).Query[map[string]any](ctx, "SELECT Id FROM Account"); !errors.Is(err, context.Canceled) {
 		t.Fatalf("Query: got %v, want context.Canceled", err)
 	}
 }

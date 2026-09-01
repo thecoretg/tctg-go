@@ -62,7 +62,7 @@ type sitesResp struct {
 }
 
 func (c *Client) CreateSite(ctx context.Context, input SiteInput) (*Site, error) {
-	result, err := post[SiteInput](ctx, c, endpointURLV1("sites"), input)
+	result, err := c.Post[SiteInput](ctx, endpointURLV1("sites"), input)
 	if err != nil {
 		return nil, fmt.Errorf("create site: %w", err)
 	}
@@ -75,7 +75,7 @@ func (c *Client) CreateSite(ctx context.Context, input SiteInput) (*Site, error)
 }
 
 func (c *Client) ListSites(ctx context.Context, shortenOwner bool) ([]Site, error) {
-	result, err := get[sitesResp](ctx, c, endpointURLV1("sites"), nil)
+	result, err := c.Get[sitesResp](ctx, endpointURLV1("sites"), nil)
 	if err != nil {
 		return nil, fmt.Errorf("list sites: %w", err)
 	}
@@ -94,7 +94,7 @@ func (c *Client) ListSites(ctx context.Context, shortenOwner bool) ([]Site, erro
 }
 
 func (c *Client) GetSite(ctx context.Context, id string, shortenOwner bool) (*Site, error) {
-	site, err := get[Site](ctx, c, endpointURLV1("sites/"+id), nil)
+	site, err := c.Get[Site](ctx, endpointURLV1("sites/"+id), nil)
 	if err != nil {
 		return nil, fmt.Errorf("get site: %w", err)
 	}
@@ -136,7 +136,7 @@ func (c *Client) UpdateSite(ctx context.Context, id string, input SiteInput) (*S
 		input.AccountOwner = owners
 	}
 
-	_, err = put[SiteInput](ctx, c, endpointURLV1("sites/"+id), input)
+	_, err = c.Put[SiteInput](ctx, endpointURLV1("sites/"+id), input)
 	if err != nil {
 		return nil, fmt.Errorf("update site: %w", err)
 	}
@@ -149,14 +149,14 @@ func (c *Client) UpdateSite(ctx context.Context, id string, input SiteInput) (*S
 }
 
 func (c *Client) DeleteSite(ctx context.Context, id string) error {
-	if err := del(ctx, c, endpointURLV1("sites/"+id)); err != nil {
+	if err := c.Delete(ctx, endpointURLV1("sites/"+id)); err != nil {
 		return fmt.Errorf("delete site: %w", err)
 	}
 	return nil
 }
 
 func (c *Client) GetSiteByNebulaAccountID(ctx context.Context, accountID string) (*Site, error) {
-	site, err := get[Site](ctx, c, endpointURLV1("sites/nebula-accounts/"+accountID), nil)
+	site, err := c.Get[Site](ctx, endpointURLV1("sites/nebula-accounts/"+accountID), nil)
 	if err != nil {
 		return nil, fmt.Errorf("get site by nebula account id: %w", err)
 	}

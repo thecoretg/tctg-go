@@ -164,7 +164,7 @@ type DeviceDetails struct {
 }
 
 func (c *Client) ListDevices(ctx context.Context) ([]Device, error) {
-	res, err := Get[[]Device](ctx, c, "/api/v1/devices", nil)
+	res, err := c.Get[[]Device](ctx, "/api/v1/devices", nil)
 	if err != nil {
 		return nil, err
 	}
@@ -172,9 +172,9 @@ func (c *Client) ListDevices(ctx context.Context) ([]Device, error) {
 }
 
 func (c *Client) GetDevice(ctx context.Context, deviceID string) (*Device, error) {
-	return Get[Device](ctx, c, fmt.Sprintf("/api/v1/devices/%s", deviceID), nil)
+	return c.Get[Device](ctx, fmt.Sprintf("/api/v1/devices/%s", deviceID), nil)
 }
 
 func (c *Client) GetDeviceDetails(ctx context.Context, deviceID string) (*DeviceDetails, error) {
-	return Get[DeviceDetails](ctx, c, fmt.Sprintf("/api/v1/devices/%s/details", deviceID), nil)
+	return c.Get[DeviceDetails](ctx, fmt.Sprintf("/api/v1/devices/%s/details", deviceID), nil)
 }

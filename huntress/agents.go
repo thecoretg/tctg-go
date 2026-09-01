@@ -68,7 +68,7 @@ type agentEnvelope struct {
 
 // ListAgents returns a single page of agents.
 func (c *Client) ListAgents(ctx context.Context, params map[string]string) (*AgentsResponse, error) {
-	result, err := get[AgentsResponse](ctx, c, endpointURL("agents"), params)
+	result, err := c.Get[AgentsResponse](ctx, endpointURL("agents"), params)
 	if err != nil {
 		return nil, fmt.Errorf("list agents: %w", err)
 	}
@@ -77,7 +77,7 @@ func (c *Client) ListAgents(ctx context.Context, params map[string]string) (*Age
 
 // GetAgent returns a single agent by ID.
 func (c *Client) GetAgent(ctx context.Context, id int64) (*Agent, error) {
-	result, err := get[agentEnvelope](ctx, c, endpointURL(fmt.Sprintf("agents/%d", id)), nil)
+	result, err := c.Get[agentEnvelope](ctx, endpointURL(fmt.Sprintf("agents/%d", id)), nil)
 	if err != nil {
 		return nil, fmt.Errorf("get agent: %w", err)
 	}
@@ -86,7 +86,7 @@ func (c *Client) GetAgent(ctx context.Context, id int64) (*Agent, error) {
 
 // UpdateAgent updates an agent's tags or tamper-protection setting.
 func (c *Client) UpdateAgent(ctx context.Context, id int64, body UpdateAgent) (*Agent, error) {
-	result, err := patch[Agent](ctx, c, endpointURL(fmt.Sprintf("agents/%d", id)), body)
+	result, err := c.Patch[Agent](ctx, endpointURL(fmt.Sprintf("agents/%d", id)), body)
 	if err != nil {
 		return nil, fmt.Errorf("update agent: %w", err)
 	}
@@ -95,7 +95,7 @@ func (c *Client) UpdateAgent(ctx context.Context, id int64, body UpdateAgent) (*
 
 // UninstallAgent schedules an agent for uninstall.
 func (c *Client) UninstallAgent(ctx context.Context, id int64) error {
-	if err := del(ctx, c, endpointURL(fmt.Sprintf("agents/%d", id))); err != nil {
+	if err := c.Delete(ctx, endpointURL(fmt.Sprintf("agents/%d", id))); err != nil {
 		return fmt.Errorf("uninstall agent: %w", err)
 	}
 	return nil
@@ -103,7 +103,7 @@ func (c *Client) UninstallAgent(ctx context.Context, id int64) error {
 
 // IsolateAgent isolates an agent's host from the network.
 func (c *Client) IsolateAgent(ctx context.Context, id int64, body IsolateAgent) (*Agent, error) {
-	result, err := post[Agent](ctx, c, endpointURL(fmt.Sprintf("agents/%d/isolation", id)), body)
+	result, err := c.Post[Agent](ctx, endpointURL(fmt.Sprintf("agents/%d/isolation", id)), body)
 	if err != nil {
 		return nil, fmt.Errorf("isolate agent: %w", err)
 	}
@@ -112,7 +112,7 @@ func (c *Client) IsolateAgent(ctx context.Context, id int64, body IsolateAgent) 
 
 // ReleaseAgentIsolation releases an agent's host from isolation.
 func (c *Client) ReleaseAgentIsolation(ctx context.Context, id int64) error {
-	if err := del(ctx, c, endpointURL(fmt.Sprintf("agents/%d/isolation", id))); err != nil {
+	if err := c.Delete(ctx, endpointURL(fmt.Sprintf("agents/%d/isolation", id))); err != nil {
 		return fmt.Errorf("release agent isolation: %w", err)
 	}
 	return nil
@@ -121,7 +121,7 @@ func (c *Client) ReleaseAgentIsolation(ctx context.Context, id int64) error {
 // ListAccountAgents returns a single page of agents for an account (Reseller
 // credentials only).
 func (c *Client) ListAccountAgents(ctx context.Context, accountID int64, params map[string]string) (*AgentsResponse, error) {
-	result, err := get[AgentsResponse](ctx, c, endpointURL(fmt.Sprintf("accounts/%d/agents", accountID)), params)
+	result, err := c.Get[AgentsResponse](ctx, endpointURL(fmt.Sprintf("accounts/%d/agents", accountID)), params)
 	if err != nil {
 		return nil, fmt.Errorf("list account agents: %w", err)
 	}
@@ -130,7 +130,7 @@ func (c *Client) ListAccountAgents(ctx context.Context, accountID int64, params 
 
 // GetAccountAgent returns a single agent for an account (Reseller credentials only).
 func (c *Client) GetAccountAgent(ctx context.Context, accountID, id int64) (*Agent, error) {
-	result, err := get[agentEnvelope](ctx, c, endpointURL(fmt.Sprintf("accounts/%d/agents/%d", accountID, id)), nil)
+	result, err := c.Get[agentEnvelope](ctx, endpointURL(fmt.Sprintf("accounts/%d/agents/%d", accountID, id)), nil)
 	if err != nil {
 		return nil, fmt.Errorf("get account agent: %w", err)
 	}
@@ -139,7 +139,7 @@ func (c *Client) GetAccountAgent(ctx context.Context, accountID, id int64) (*Age
 
 // UpdateAccountAgent updates an agent within an account (Reseller credentials only).
 func (c *Client) UpdateAccountAgent(ctx context.Context, accountID, id int64, body UpdateAgent) (*Agent, error) {
-	result, err := patch[Agent](ctx, c, endpointURL(fmt.Sprintf("accounts/%d/agents/%d", accountID, id)), body)
+	result, err := c.Patch[Agent](ctx, endpointURL(fmt.Sprintf("accounts/%d/agents/%d", accountID, id)), body)
 	if err != nil {
 		return nil, fmt.Errorf("update account agent: %w", err)
 	}
@@ -149,7 +149,7 @@ func (c *Client) UpdateAccountAgent(ctx context.Context, accountID, id int64, bo
 // UninstallAccountAgent schedules an account's agent for uninstall (Reseller
 // credentials only).
 func (c *Client) UninstallAccountAgent(ctx context.Context, accountID, id int64) error {
-	if err := del(ctx, c, endpointURL(fmt.Sprintf("accounts/%d/agents/%d", accountID, id))); err != nil {
+	if err := c.Delete(ctx, endpointURL(fmt.Sprintf("accounts/%d/agents/%d", accountID, id))); err != nil {
 		return fmt.Errorf("uninstall account agent: %w", err)
 	}
 	return nil
@@ -157,7 +157,7 @@ func (c *Client) UninstallAccountAgent(ctx context.Context, accountID, id int64)
 
 // IsolateAccountAgent isolates an account's agent host (Reseller credentials only).
 func (c *Client) IsolateAccountAgent(ctx context.Context, accountID, id int64, body IsolateAgent) (*Agent, error) {
-	result, err := post[Agent](ctx, c, endpointURL(fmt.Sprintf("accounts/%d/agents/%d/isolation", accountID, id)), body)
+	result, err := c.Post[Agent](ctx, endpointURL(fmt.Sprintf("accounts/%d/agents/%d/isolation", accountID, id)), body)
 	if err != nil {
 		return nil, fmt.Errorf("isolate account agent: %w", err)
 	}
@@ -167,7 +167,7 @@ func (c *Client) IsolateAccountAgent(ctx context.Context, accountID, id int64, b
 // ReleaseAccountAgentIsolation releases an account's agent host from isolation
 // (Reseller credentials only).
 func (c *Client) ReleaseAccountAgentIsolation(ctx context.Context, accountID, id int64) error {
-	if err := del(ctx, c, endpointURL(fmt.Sprintf("accounts/%d/agents/%d/isolation", accountID, id))); err != nil {
+	if err := c.Delete(ctx, endpointURL(fmt.Sprintf("accounts/%d/agents/%d/isolation", accountID, id))); err != nil {
 		return fmt.Errorf("release account agent isolation: %w", err)
 	}
 	return nil

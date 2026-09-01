@@ -102,7 +102,7 @@ func (c *Client) Login(ctx context.Context) (*TokenResult, error) {
 		Password:          c.password,
 		TwoFactorPasscode: c.twoFactor,
 	}
-	result, err := post[TokenResult](ctx, c, apiTokenEndpoint, creds)
+	result, err := c.Post[TokenResult](ctx, apiTokenEndpoint, creds)
 	if err != nil {
 		return nil, fmt.Errorf("automate login: %w", err)
 	}
@@ -124,7 +124,7 @@ func (c *Client) Refresh(ctx context.Context) (*TokenResult, error) {
 		return nil, fmt.Errorf("automate refresh: no token to refresh")
 	}
 	// The refresh body is the current token as a bare JSON string.
-	result, err := post[TokenResult](ctx, c, apiTokenEndpoint+"/refresh", token)
+	result, err := c.Post[TokenResult](ctx, apiTokenEndpoint+"/refresh", token)
 	if err != nil {
 		return nil, fmt.Errorf("automate refresh: %w", err)
 	}

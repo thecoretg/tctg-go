@@ -6,7 +6,7 @@ import (
 )
 
 func (c *Client) ListRooms(ctx context.Context, params map[string]string) ([]Room, error) {
-	resp, err := get[ListRoomsResp](ctx, c, "rooms", params)
+	resp, err := c.Get[ListRoomsResp](ctx, "rooms", params)
 	if err != nil {
 		return nil, fmt.Errorf("listing rooms: %w", err)
 	}

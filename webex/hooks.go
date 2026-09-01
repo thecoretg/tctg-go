@@ -12,11 +12,11 @@ import (
 )
 
 func (c *Client) CreateWebhook(ctx context.Context, webhook *Webhook) (*Webhook, error) {
-	return post[Webhook](ctx, c, "webhooks", webhook)
+	return c.Post[Webhook](ctx, "webhooks", webhook)
 }
 
 func (c *Client) GetWebhooks(ctx context.Context, params map[string]string) ([]Webhook, error) {
-	resp, err := get[ListWebhooksResp](ctx, c, "webhooks", params)
+	resp, err := c.Get[ListWebhooksResp](ctx, "webhooks", params)
 	if err != nil {
 		return nil, fmt.Errorf("getting list of webhooks: %w", err)
 	}
@@ -25,15 +25,15 @@ func (c *Client) GetWebhooks(ctx context.Context, params map[string]string) ([]W
 }
 
 func (c *Client) GetWebhook(ctx context.Context, webhookID string, params map[string]string) (*Webhook, error) {
-	return get[Webhook](ctx, c, fmt.Sprintf("webhooks/%s", webhookID), params)
+	return c.Get[Webhook](ctx, fmt.Sprintf("webhooks/%s", webhookID), params)
 }
 
 func (c *Client) PutWebhook(ctx context.Context, webhookID string, webhook *Webhook) (*Webhook, error) {
-	return put[Webhook](ctx, c, fmt.Sprintf("webhooks/%s", webhookID), webhook)
+	return c.Put[Webhook](ctx, fmt.Sprintf("webhooks/%s", webhookID), webhook)
 }
 
 func (c *Client) DeleteWebhook(ctx context.Context, webhookID string) error {
-	return del(ctx, c, fmt.Sprintf("webhooks/%s", webhookID))
+	return c.Delete(ctx, fmt.Sprintf("webhooks/%s", webhookID))
 }
 
 // ValidateWebhook checks the X-Webex-Signature header against the HMAC-SHA256 of the body.

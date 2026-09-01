@@ -10,7 +10,7 @@ func companyEndpoint(companyID int) string {
 }
 
 func (c *Client) ListCompanies(ctx context.Context, params map[string]string) ([]Company, error) {
-	result, err := get[[]Company](ctx, c, "cwa/api/v1/Clients", params)
+	result, err := c.Get[[]Company](ctx, "cwa/api/v1/Clients", params)
 	if err != nil {
 		return nil, fmt.Errorf("list companies: %w", err)
 	}
@@ -18,7 +18,7 @@ func (c *Client) ListCompanies(ctx context.Context, params map[string]string) ([
 }
 
 func (c *Client) GetCompany(ctx context.Context, companyID int, params map[string]string) (*Company, error) {
-	result, err := get[Company](ctx, c, companyEndpoint(companyID), params)
+	result, err := c.Get[Company](ctx, companyEndpoint(companyID), params)
 	if err != nil {
 		return nil, fmt.Errorf("get company: %w", err)
 	}
@@ -26,7 +26,7 @@ func (c *Client) GetCompany(ctx context.Context, companyID int, params map[strin
 }
 
 func (c *Client) PostCompany(ctx context.Context, company *Company) (*Company, error) {
-	result, err := post[Company](ctx, c, "cwa/api/v1/Clients", company)
+	result, err := c.Post[Company](ctx, "cwa/api/v1/Clients", company)
 	if err != nil {
 		return nil, fmt.Errorf("post company: %w", err)
 	}
@@ -34,7 +34,7 @@ func (c *Client) PostCompany(ctx context.Context, company *Company) (*Company, e
 }
 
 func (c *Client) PutCompany(ctx context.Context, companyID int, company *Company) (*Company, error) {
-	result, err := put[Company](ctx, c, companyEndpoint(companyID), company)
+	result, err := c.Put[Company](ctx, companyEndpoint(companyID), company)
 	if err != nil {
 		return nil, fmt.Errorf("put company: %w", err)
 	}
@@ -42,7 +42,7 @@ func (c *Client) PutCompany(ctx context.Context, companyID int, company *Company
 }
 
 func (c *Client) PatchCompany(ctx context.Context, companyID int, patchOps []PatchOp) (*Company, error) {
-	result, err := patch[Company](ctx, c, companyEndpoint(companyID), patchOps)
+	result, err := c.Patch[Company](ctx, companyEndpoint(companyID), patchOps)
 	if err != nil {
 		return nil, fmt.Errorf("patch company: %w", err)
 	}
@@ -50,7 +50,7 @@ func (c *Client) PatchCompany(ctx context.Context, companyID int, patchOps []Pat
 }
 
 func (c *Client) DeleteCompany(ctx context.Context, companyID int) error {
-	if err := del(ctx, c, companyEndpoint(companyID)); err != nil {
+	if err := c.Delete(ctx, companyEndpoint(companyID)); err != nil {
 		return fmt.Errorf("delete company: %w", err)
 	}
 	return nil
@@ -59,7 +59,7 @@ func (c *Client) DeleteCompany(ctx context.Context, companyID int) error {
 // GetCompanyExtraFields returns the custom fields configured on a company
 // (GET /cwa/api/v1/Clients/{clientId}/ExtraFields).
 func (c *Client) GetCompanyExtraFields(ctx context.Context, companyID int) ([]ExtraField, error) {
-	result, err := get[[]ExtraField](ctx, c, companyEndpoint(companyID)+"/ExtraFields", nil)
+	result, err := c.Get[[]ExtraField](ctx, companyEndpoint(companyID)+"/ExtraFields", nil)
 	if err != nil {
 		return nil, fmt.Errorf("get company extra fields: %w", err)
 	}
@@ -76,7 +76,7 @@ func (c *Client) GetCompanyExtraFields(ctx context.Context, companyID int) ([]Ex
 // This endpoint is documented by ConnectWise but absent from the OpenAPI spec.
 func (c *Client) PatchCompanyExtraField(ctx context.Context, companyID, extraFieldDefinitionID int, patchOps []PatchOp) (*ExtraField, error) {
 	endpoint := fmt.Sprintf("%s/ExtraFields/%d", companyEndpoint(companyID), extraFieldDefinitionID)
-	result, err := patch[ExtraField](ctx, c, endpoint, patchOps)
+	result, err := c.Patch[ExtraField](ctx, endpoint, patchOps)
 	if err != nil {
 		return nil, fmt.Errorf("patch company extra field: %w", err)
 	}
@@ -86,7 +86,7 @@ func (c *Client) PatchCompanyExtraField(ctx context.Context, companyID, extraFie
 // ListCompanyDocuments returns the documents attached to a company
 // (GET /cwa/api/v1/clients/{clientId}/documents).
 func (c *Client) ListCompanyDocuments(ctx context.Context, companyID int, params map[string]string) ([]Document, error) {
-	result, err := get[[]Document](ctx, c, companyEndpoint(companyID)+"/documents", params)
+	result, err := c.Get[[]Document](ctx, companyEndpoint(companyID)+"/documents", params)
 	if err != nil {
 		return nil, fmt.Errorf("list company documents: %w", err)
 	}
@@ -96,7 +96,7 @@ func (c *Client) ListCompanyDocuments(ctx context.Context, companyID int, params
 // ListCompanyLicenses returns the managed licenses on a company
 // (GET /cwa/api/v1/clients/{clientId}/licenses).
 func (c *Client) ListCompanyLicenses(ctx context.Context, companyID int, params map[string]string) ([]ManagedLicense, error) {
-	result, err := get[[]ManagedLicense](ctx, c, companyEndpoint(companyID)+"/licenses", params)
+	result, err := c.Get[[]ManagedLicense](ctx, companyEndpoint(companyID)+"/licenses", params)
 	if err != nil {
 		return nil, fmt.Errorf("list company licenses: %w", err)
 	}
@@ -106,7 +106,7 @@ func (c *Client) ListCompanyLicenses(ctx context.Context, companyID int, params 
 // PostCompanyLicense creates a managed license on a company
 // (POST /cwa/api/v1/clients/{clientId}/licenses).
 func (c *Client) PostCompanyLicense(ctx context.Context, companyID int, license *ManagedLicense) (*ManagedLicense, error) {
-	result, err := post[ManagedLicense](ctx, c, companyEndpoint(companyID)+"/licenses", license)
+	result, err := c.Post[ManagedLicense](ctx, companyEndpoint(companyID)+"/licenses", license)
 	if err != nil {
 		return nil, fmt.Errorf("post company license: %w", err)
 	}
@@ -116,7 +116,7 @@ func (c *Client) PostCompanyLicense(ctx context.Context, companyID int, license 
 // ListCompanyProductKeys returns the product keys on a company
 // (GET /cwa/api/v1/clients/{clientId}/productkeys).
 func (c *Client) ListCompanyProductKeys(ctx context.Context, companyID int, params map[string]string) ([]ProductKey, error) {
-	result, err := get[[]ProductKey](ctx, c, companyEndpoint(companyID)+"/productkeys", params)
+	result, err := c.Get[[]ProductKey](ctx, companyEndpoint(companyID)+"/productkeys", params)
 	if err != nil {
 		return nil, fmt.Errorf("list company product keys: %w", err)
 	}
@@ -126,7 +126,7 @@ func (c *Client) ListCompanyProductKeys(ctx context.Context, companyID int, para
 // PostCompanyProductKey creates a product key on a company
 // (POST /cwa/api/v1/clients/{clientId}/productkeys).
 func (c *Client) PostCompanyProductKey(ctx context.Context, companyID int, key *ProductKey) (*ProductKey, error) {
-	result, err := post[ProductKey](ctx, c, companyEndpoint(companyID)+"/productkeys", key)
+	result, err := c.Post[ProductKey](ctx, companyEndpoint(companyID)+"/productkeys", key)
 	if err != nil {
 		return nil, fmt.Errorf("post company product key: %w", err)
 	}
@@ -140,7 +140,7 @@ func companyPermissionsEndpoint(companyID, userClassID int) string {
 // GetCompanyPermissions returns the permissions a user class has on a company
 // (GET /cwa/api/v1/clients/{clientId}/permissions/{userClassId}).
 func (c *Client) GetCompanyPermissions(ctx context.Context, companyID, userClassID int) ([]string, error) {
-	result, err := get[[]string](ctx, c, companyPermissionsEndpoint(companyID, userClassID), nil)
+	result, err := c.Get[[]string](ctx, companyPermissionsEndpoint(companyID, userClassID), nil)
 	if err != nil {
 		return nil, fmt.Errorf("get company permissions: %w", err)
 	}
@@ -150,7 +150,7 @@ func (c *Client) GetCompanyPermissions(ctx context.Context, companyID, userClass
 // PutCompanyPermissions replaces the permissions a user class has on a company
 // (PUT /cwa/api/v1/clients/{clientId}/permissions/{userClassId}).
 func (c *Client) PutCompanyPermissions(ctx context.Context, companyID, userClassID int, permissions []string) ([]string, error) {
-	result, err := put[[]string](ctx, c, companyPermissionsEndpoint(companyID, userClassID), permissions)
+	result, err := c.Put[[]string](ctx, companyPermissionsEndpoint(companyID, userClassID), permissions)
 	if err != nil {
 		return nil, fmt.Errorf("put company permissions: %w", err)
 	}
@@ -160,7 +160,7 @@ func (c *Client) PutCompanyPermissions(ctx context.Context, companyID, userClass
 // PostCompanyPermissions adds permissions for a user class on a company
 // (POST /cwa/api/v1/clients/{clientId}/permissions/{userClassId}).
 func (c *Client) PostCompanyPermissions(ctx context.Context, companyID, userClassID int, permissions []string) ([]string, error) {
-	result, err := post[[]string](ctx, c, companyPermissionsEndpoint(companyID, userClassID), permissions)
+	result, err := c.Post[[]string](ctx, companyPermissionsEndpoint(companyID, userClassID), permissions)
 	if err != nil {
 		return nil, fmt.Errorf("post company permissions: %w", err)
 	}
@@ -170,7 +170,7 @@ func (c *Client) PostCompanyPermissions(ctx context.Context, companyID, userClas
 // DeleteCompanyPermissions removes a user class's permissions on a company
 // (DELETE /cwa/api/v1/clients/{clientId}/permissions/{userClassId}).
 func (c *Client) DeleteCompanyPermissions(ctx context.Context, companyID, userClassID int) error {
-	if err := del(ctx, c, companyPermissionsEndpoint(companyID, userClassID)); err != nil {
+	if err := c.Delete(ctx, companyPermissionsEndpoint(companyID, userClassID)); err != nil {
 		return fmt.Errorf("delete company permissions: %w", err)
 	}
 	return nil

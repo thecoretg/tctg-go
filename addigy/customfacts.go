@@ -136,7 +136,7 @@ func (c *Client) ListCustomFacts(ctx context.Context) (*FactsResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-	result, err := get[FactsResponse](ctx, c, url, nil)
+	result, err := c.Get[FactsResponse](ctx, url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("list custom facts: %w", err)
 	}
@@ -150,7 +150,7 @@ func (c *Client) GetCustomFact(ctx context.Context, id string) (*Fact, error) {
 	if err != nil {
 		return nil, err
 	}
-	result, err := get[Fact](ctx, c, url, nil)
+	result, err := c.Get[Fact](ctx, url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("get custom fact: %w", err)
 	}
@@ -164,7 +164,7 @@ func (c *Client) GetCustomFactUsage(ctx context.Context, id string) (*FactUsage,
 	if err != nil {
 		return nil, err
 	}
-	result, err := get[FactUsage](ctx, c, url, nil)
+	result, err := c.Get[FactUsage](ctx, url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("get custom fact usage: %w", err)
 	}
@@ -177,7 +177,7 @@ func (c *Client) CreateCustomFact(ctx context.Context, req FactPostRequest) (*Fa
 	if err != nil {
 		return nil, err
 	}
-	result, err := post[FactResponse](ctx, c, url, req)
+	result, err := c.Post[FactResponse](ctx, url, req)
 	if err != nil {
 		return nil, fmt.Errorf("create custom fact: %w", err)
 	}
@@ -190,7 +190,7 @@ func (c *Client) UpdateCustomFact(ctx context.Context, req FactPutRequest) error
 	if err != nil {
 		return err
 	}
-	if _, err := put[struct{}](ctx, c, url, req); err != nil {
+	if _, err := c.Put[struct{}](ctx, url, req); err != nil {
 		return fmt.Errorf("update custom fact: %w", err)
 	}
 	return nil
@@ -203,7 +203,7 @@ func (c *Client) DeleteCustomFact(ctx context.Context, id string) error {
 	if err != nil {
 		return err
 	}
-	if err := del(ctx, c, url, map[string]string{"id": id}); err != nil {
+	if err := c.Delete(ctx, url, map[string]string{"id": id}); err != nil {
 		return fmt.Errorf("delete custom fact: %w", err)
 	}
 	return nil
@@ -216,7 +216,7 @@ func (c *Client) QueryCustomFacts(ctx context.Context, req FactQuery) (*FactsRes
 	if err != nil {
 		return nil, err
 	}
-	result, err := post[FactsResponse](ctx, c, url, req)
+	result, err := c.Post[FactsResponse](ctx, url, req)
 	if err != nil {
 		return nil, fmt.Errorf("query custom facts: %w", err)
 	}
@@ -230,7 +230,7 @@ func (c *Client) AssignCustomFactToPolicy(ctx context.Context, req AssignFactToP
 	if err != nil {
 		return nil, err
 	}
-	result, err := post[FactPolicyResult](ctx, c, url, req)
+	result, err := c.Post[FactPolicyResult](ctx, url, req)
 	if err != nil {
 		return nil, fmt.Errorf("assign custom fact to policy: %w", err)
 	}
@@ -244,7 +244,7 @@ func (c *Client) UnassignCustomFactFromPolicy(ctx context.Context, id, policyID 
 	if err != nil {
 		return err
 	}
-	if err := del(ctx, c, url, map[string]string{"id": id, "policy_id": policyID}); err != nil {
+	if err := c.Delete(ctx, url, map[string]string{"id": id, "policy_id": policyID}); err != nil {
 		return fmt.Errorf("unassign custom fact from policy: %w", err)
 	}
 	return nil

@@ -16,7 +16,8 @@ const (
 
 var ErrNotFound = errors.New("404 status returned")
 
-func get[T any](ctx context.Context, c *Client, endpoint string, params map[string]string) (*T, error) {
+// Get issues a GET request and decodes the JSON response into T.
+func (c *Client) Get[T any](ctx context.Context, endpoint string, params map[string]string) (*T, error) {
 	res, err := httpx.Do(ctx, c.httpClient, http.MethodGet, c.endpointURL(endpoint), params, nil)
 	if err != nil {
 		return nil, err
@@ -36,9 +37,9 @@ func get[T any](ctx context.Context, c *Client, endpoint string, params map[stri
 	return &target, nil
 }
 
-// getMany follows ConnectWise's Link header until every page is collected, or
+// GetMany follows ConnectWise's Link header until every page is collected, or
 // until a WithLimit cap is reached.
-func getMany[T any](ctx context.Context, c *Client, endpoint string, params map[string]string, opts ...ListOption) ([]T, error) {
+func (c *Client) GetMany[T any](ctx context.Context, endpoint string, params map[string]string, opts ...ListOption) ([]T, error) {
 	cfg := newListConfig(opts)
 	if cfg.limit > 0 {
 		params = withPageSize(params, min(cfg.limit, maxPageSize))
@@ -77,7 +78,8 @@ func getMany[T any](ctx context.Context, c *Client, endpoint string, params map[
 	return allItems, nil
 }
 
-func post[T any](ctx context.Context, c *Client, endpoint string, body any) (*T, error) {
+// Post issues a POST request with body and decodes the JSON response into T.
+func (c *Client) Post[T any](ctx context.Context, endpoint string, body any) (*T, error) {
 	res, err := httpx.Do(ctx, c.httpClient, http.MethodPost, c.endpointURL(endpoint), nil, body)
 	if err != nil {
 		return nil, err
@@ -94,7 +96,8 @@ func post[T any](ctx context.Context, c *Client, endpoint string, body any) (*T,
 	return &target, nil
 }
 
-func put[T any](ctx context.Context, c *Client, endpoint string, body any) (*T, error) {
+// Put issues a PUT request with body and decodes the JSON response into T.
+func (c *Client) Put[T any](ctx context.Context, endpoint string, body any) (*T, error) {
 	res, err := httpx.Do(ctx, c.httpClient, http.MethodPut, c.endpointURL(endpoint), nil, body)
 	if err != nil {
 		return nil, err
@@ -114,7 +117,8 @@ func put[T any](ctx context.Context, c *Client, endpoint string, body any) (*T, 
 	return &target, nil
 }
 
-func patch[T any](ctx context.Context, c *Client, endpoint string, patchOps []PatchOp) (*T, error) {
+// Patch issues a PATCH request and decodes the JSON response into T.
+func (c *Client) Patch[T any](ctx context.Context, endpoint string, patchOps []PatchOp) (*T, error) {
 	res, err := httpx.Do(ctx, c.httpClient, http.MethodPatch, c.endpointURL(endpoint), nil, patchOps)
 	if err != nil {
 		return nil, err
@@ -131,7 +135,8 @@ func patch[T any](ctx context.Context, c *Client, endpoint string, patchOps []Pa
 	return &target, nil
 }
 
-func del(ctx context.Context, c *Client, endpoint string) error {
+// Delete issues a DELETE request, discarding any response body.
+func (c *Client) Delete(ctx context.Context, endpoint string) error {
 	res, err := httpx.Do(ctx, c.httpClient, http.MethodDelete, c.endpointURL(endpoint), nil, nil)
 	if err != nil {
 		return err

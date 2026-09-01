@@ -22,7 +22,8 @@ func apiError(res *httpx.Response) error {
 	return fmt.Errorf("error response from Umbrella API: %s [%d]", res.Body, res.StatusCode)
 }
 
-func get[T any](ctx context.Context, c *Client, url string, params map[string]string) (*T, error) {
+// Get issues a GET request and decodes the JSON response into T.
+func (c *Client) Get[T any](ctx context.Context, url string, params map[string]string) (*T, error) {
 	res, err := httpx.Do(ctx, c.httpClient, http.MethodGet, url, params, nil)
 	if err != nil {
 		return nil, err
@@ -42,7 +43,8 @@ func get[T any](ctx context.Context, c *Client, url string, params map[string]st
 	return &target, nil
 }
 
-func post[T any](ctx context.Context, c *Client, url string, body any) (*T, error) {
+// Post issues a POST request with body and decodes the JSON response into T.
+func (c *Client) Post[T any](ctx context.Context, url string, body any) (*T, error) {
 	res, err := httpx.Do(ctx, c.httpClient, http.MethodPost, url, nil, body)
 	if err != nil {
 		return nil, err
@@ -62,7 +64,8 @@ func post[T any](ctx context.Context, c *Client, url string, body any) (*T, erro
 	return &target, nil
 }
 
-func put[T any](ctx context.Context, c *Client, url string, body any) (*T, error) {
+// Put issues a PUT request with body and decodes the JSON response into T.
+func (c *Client) Put[T any](ctx context.Context, url string, body any) (*T, error) {
 	res, err := httpx.Do(ctx, c.httpClient, http.MethodPut, url, nil, body)
 	if err != nil {
 		return nil, err
@@ -82,7 +85,8 @@ func put[T any](ctx context.Context, c *Client, url string, body any) (*T, error
 	return &target, nil
 }
 
-func del(ctx context.Context, c *Client, url string) error {
+// Delete issues a DELETE request, discarding any response body.
+func (c *Client) Delete(ctx context.Context, url string) error {
 	res, err := httpx.Do(ctx, c.httpClient, http.MethodDelete, url, nil, nil)
 	if err != nil {
 		return err

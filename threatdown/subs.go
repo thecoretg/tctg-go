@@ -44,7 +44,7 @@ const (
 var ErrSubNotFound = errors.New("subscription not found")
 
 func (c *Client) GetSiteSubscriptions(ctx context.Context, siteID string) ([]SiteSubscription, error) {
-	subs, err := get[[]SiteSubscription](ctx, c, endpointURLV2(fmt.Sprintf("sites/%s/subscriptions", siteID)), nil)
+	subs, err := c.Get[[]SiteSubscription](ctx, endpointURLV2(fmt.Sprintf("sites/%s/subscriptions", siteID)), nil)
 	if err != nil {
 		if errors.Is(err, ErrNotFound) {
 			return nil, ErrSubNotFound
@@ -55,7 +55,7 @@ func (c *Client) GetSiteSubscriptions(ctx context.Context, siteID string) ([]Sit
 }
 
 func (c *Client) CreateSiteSubscription(ctx context.Context, siteID string, sub SiteSubscription) ([]SiteSubscription, error) {
-	subs, err := post[[]SiteSubscription](ctx, c, endpointURLV2(fmt.Sprintf("sites/%s/subscriptions", siteID)), sub)
+	subs, err := c.Post[[]SiteSubscription](ctx, endpointURLV2(fmt.Sprintf("sites/%s/subscriptions", siteID)), sub)
 	if err != nil {
 		return nil, fmt.Errorf("create site subscription: %w", err)
 	}
@@ -63,7 +63,7 @@ func (c *Client) CreateSiteSubscription(ctx context.Context, siteID string, sub 
 }
 
 func (c *Client) UpdateSiteSubscriptions(ctx context.Context, siteID string, subs []SiteSubscription) ([]SiteSubscription, error) {
-	result, err := put[[]SiteSubscription](ctx, c, endpointURLV2(fmt.Sprintf("sites/%s/subscriptions", siteID)), subs)
+	result, err := c.Put[[]SiteSubscription](ctx, endpointURLV2(fmt.Sprintf("sites/%s/subscriptions", siteID)), subs)
 	if err != nil {
 		return nil, fmt.Errorf("update site subscriptions: %w", err)
 	}

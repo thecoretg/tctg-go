@@ -10,11 +10,11 @@ func memberIDEndpoint(memberID int) string {
 }
 
 func (c *Client) PostMember(ctx context.Context, member *Member) (*Member, error) {
-	return post[Member](ctx, c, "system/members", member)
+	return c.Post[Member](ctx, "system/members", member)
 }
 
 func (c *Client) ListMembers(ctx context.Context, params map[string]string, opts ...ListOption) ([]Member, error) {
-	return getMany[Member](ctx, c, "system/members", params, opts...)
+	return c.GetMany[Member](ctx, "system/members", params, opts...)
 }
 
 func (c *Client) GetMemberByIdentifier(ctx context.Context, identifier string) (*Member, error) {
@@ -39,17 +39,17 @@ func (c *Client) GetMemberByIdentifier(ctx context.Context, identifier string) (
 }
 
 func (c *Client) GetMember(ctx context.Context, memberID int, params map[string]string) (*Member, error) {
-	return get[Member](ctx, c, memberIDEndpoint(memberID), params)
+	return c.Get[Member](ctx, memberIDEndpoint(memberID), params)
 }
 
 func (c *Client) PutMember(ctx context.Context, memberID int, member *Member) (*Member, error) {
-	return put[Member](ctx, c, memberIDEndpoint(memberID), member)
+	return c.Put[Member](ctx, memberIDEndpoint(memberID), member)
 }
 
 func (c *Client) PatchMember(ctx context.Context, memberID int, patchOps []PatchOp) (*Member, error) {
-	return patch[Member](ctx, c, memberIDEndpoint(memberID), patchOps)
+	return c.Patch[Member](ctx, memberIDEndpoint(memberID), patchOps)
 }
 
 func (c *Client) DeleteMember(ctx context.Context, memberID int) error {
-	return del(ctx, c, memberIDEndpoint(memberID))
+	return c.Delete(ctx, memberIDEndpoint(memberID))
 }

@@ -119,7 +119,7 @@ type ReportsResponse struct {
 
 // ListReports returns a single page of summary reports.
 func (c *Client) ListReports(ctx context.Context, params map[string]string) (*ReportsResponse, error) {
-	result, err := get[ReportsResponse](ctx, c, endpointURL("reports"), params)
+	result, err := c.Get[ReportsResponse](ctx, endpointURL("reports"), params)
 	if err != nil {
 		return nil, fmt.Errorf("list reports: %w", err)
 	}
@@ -128,7 +128,7 @@ func (c *Client) ListReports(ctx context.Context, params map[string]string) (*Re
 
 // GetReport returns a single summary report by ID.
 func (c *Client) GetReport(ctx context.Context, id int64) (*SummaryReport, error) {
-	result, err := get[SummaryReport](ctx, c, endpointURL(fmt.Sprintf("reports/%d", id)), nil)
+	result, err := c.Get[SummaryReport](ctx, endpointURL(fmt.Sprintf("reports/%d", id)), nil)
 	if err != nil {
 		return nil, fmt.Errorf("get report: %w", err)
 	}
@@ -138,7 +138,7 @@ func (c *Client) GetReport(ctx context.Context, id int64) (*SummaryReport, error
 // ListAccountReports returns a single page of summary reports for an account
 // (Reseller credentials only).
 func (c *Client) ListAccountReports(ctx context.Context, accountID int64, params map[string]string) (*ReportsResponse, error) {
-	result, err := get[ReportsResponse](ctx, c, endpointURL(fmt.Sprintf("accounts/%d/reports", accountID)), params)
+	result, err := c.Get[ReportsResponse](ctx, endpointURL(fmt.Sprintf("accounts/%d/reports", accountID)), params)
 	if err != nil {
 		return nil, fmt.Errorf("list account reports: %w", err)
 	}
@@ -148,7 +148,7 @@ func (c *Client) ListAccountReports(ctx context.Context, accountID int64, params
 // GetAccountReport returns a single summary report for an account (Reseller
 // credentials only).
 func (c *Client) GetAccountReport(ctx context.Context, accountID, id int64) (*SummaryReport, error) {
-	result, err := get[SummaryReport](ctx, c, endpointURL(fmt.Sprintf("accounts/%d/reports/%d", accountID, id)), nil)
+	result, err := c.Get[SummaryReport](ctx, endpointURL(fmt.Sprintf("accounts/%d/reports/%d", accountID, id)), nil)
 	if err != nil {
 		return nil, fmt.Errorf("get account report: %w", err)
 	}

@@ -18,7 +18,7 @@ type usersResp struct {
 }
 
 func (c *Client) ListUsers(ctx context.Context) ([]User, error) {
-	users, err := getAll(ctx, c, endpointURLV1("users"), map[string]string{"page_size": "1000"}, func(r usersResp) ([]User, string) {
+	users, err := c.getAll(ctx, endpointURLV1("users"), map[string]string{"page_size": "1000"}, func(r usersResp) ([]User, string) {
 		return r.Users, r.NextCursor
 	})
 	if err != nil {

@@ -42,7 +42,7 @@ type OrgInfo struct {
 // params are "page", "limit" (max 100), "name", "status", "swgStatus",
 // "lastSyncBefore", and "lastSyncAfter".
 func (c *Client) ListRoamingComputers(ctx context.Context, params map[string]string) ([]RoamingComputer, error) {
-	result, err := get[[]RoamingComputer](ctx, c, deploymentsURL("roamingcomputers"), params)
+	result, err := c.Get[[]RoamingComputer](ctx, deploymentsURL("roamingcomputers"), params)
 	if err != nil {
 		return nil, fmt.Errorf("list roaming computers: %w", err)
 	}
@@ -52,7 +52,7 @@ func (c *Client) ListRoamingComputers(ctx context.Context, params map[string]str
 // GetRoamingComputer gets a roaming computer by device ID.
 func (c *Client) GetRoamingComputer(ctx context.Context, deviceID string) (*RoamingComputer, error) {
 	url := deploymentsURL(fmt.Sprintf("roamingcomputers/%s", deviceID))
-	result, err := get[RoamingComputer](ctx, c, url, nil)
+	result, err := c.Get[RoamingComputer](ctx, url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("get roaming computer: %w", err)
 	}
@@ -62,7 +62,7 @@ func (c *Client) GetRoamingComputer(ctx context.Context, deviceID string) (*Roam
 // UpdateRoamingComputer updates the name of a roaming computer by device ID.
 func (c *Client) UpdateRoamingComputer(ctx context.Context, deviceID string, body RoamingComputerUpdateRequest) (*RoamingComputer, error) {
 	url := deploymentsURL(fmt.Sprintf("roamingcomputers/%s", deviceID))
-	result, err := put[RoamingComputer](ctx, c, url, body)
+	result, err := c.Put[RoamingComputer](ctx, url, body)
 	if err != nil {
 		return nil, fmt.Errorf("update roaming computer: %w", err)
 	}
@@ -72,7 +72,7 @@ func (c *Client) UpdateRoamingComputer(ctx context.Context, deviceID string, bod
 // DeleteRoamingComputer deletes a roaming computer by device ID.
 func (c *Client) DeleteRoamingComputer(ctx context.Context, deviceID string) error {
 	url := deploymentsURL(fmt.Sprintf("roamingcomputers/%s", deviceID))
-	if err := del(ctx, c, url); err != nil {
+	if err := c.Delete(ctx, url); err != nil {
 		return fmt.Errorf("delete roaming computer: %w", err)
 	}
 	return nil
@@ -81,7 +81,7 @@ func (c *Client) DeleteRoamingComputer(ctx context.Context, deviceID string) err
 // GetOrganizationInfo gets the OrgInfo.json properties for deploying the Cisco
 // Secure Client in the organization.
 func (c *Client) GetOrganizationInfo(ctx context.Context) (*OrgInfo, error) {
-	result, err := get[OrgInfo](ctx, c, deploymentsURL("roamingcomputers/orgInfo"), nil)
+	result, err := c.Get[OrgInfo](ctx, deploymentsURL("roamingcomputers/orgInfo"), nil)
 	if err != nil {
 		return nil, fmt.Errorf("get organization info: %w", err)
 	}

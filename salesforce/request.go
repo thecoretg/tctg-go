@@ -23,13 +23,13 @@ var ErrNotFound = errors.New("404 status returned")
 // pages until Salesforce signals done. Records are decoded into T exactly as
 // Salesforce returns them, including the attributes key; use QueryRecords for
 // normalized keys.
-func Query[T any](ctx context.Context, c *Client, q string) ([]T, error) {
+func (c *Client) Query[T any](ctx context.Context, q string) ([]T, error) {
 	var all []T
 	url := c.endpointURL("query")
 	params := map[string]string{"q": q}
 
 	for {
-		result, err := get[queryResp[T]](ctx, c, url, params)
+		result, err := c.Get[queryResp[T]](ctx, url, params)
 		if err != nil {
 			return nil, err
 		}
@@ -49,8 +49,8 @@ func Query[T any](ctx context.Context, c *Client, q string) ([]T, error) {
 
 // QueryRecords executes a SOQL query and returns each record with its keys
 // lowercased, __c suffixes stripped, and the attributes key dropped.
-func QueryRecords(ctx context.Context, c *Client, q string) ([]map[string]any, error) {
-	records, err := Query[map[string]any](ctx, c, q)
+func (c *Client) QueryRecords(ctx context.Context, q string) ([]map[string]any, error) {
+	records, err := c.Query[map[string]any](ctx, q)
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +77,8 @@ func simplifyRecord(m map[string]any) map[string]any {
 	return out
 }
 
-func get[T any](ctx context.Context, c *Client, url string, params map[string]string) (*T, error) {
+// Get issues a GET request and decodes the JSON response into T.
+func (c *Client) Get[T any](ctx context.Context, url string, params map[string]string) (*T, error) {
 	res, err := httpx.Do(ctx, c.httpClient, http.MethodGet, url, params, nil)
 	if err != nil {
 		return nil, err

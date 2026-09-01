@@ -50,7 +50,7 @@ func TestCollectPagedStopsOnShortPage(t *testing.T) {
 	}
 }
 
-// TestListCustomersPaging drives the real get helper and pagination against a
+// TestListCustomersPaging drives the real Get helper and pagination against a
 // stub server: a full first page followed by a short second page.
 func TestListCustomersPaging(t *testing.T) {
 	const limit = 2
@@ -70,7 +70,7 @@ func TestListCustomersPaging(t *testing.T) {
 	c := &Client{httpClient: httpx.NewClient(nil, nil, 0)}
 	all, err := collectPaged(1, limit, func(page, l int) ([]Customer, error) {
 		params := map[string]string{"page": strconv.Itoa(page), "limit": strconv.Itoa(l)}
-		result, err := get[[]Customer](context.Background(), c, srv.URL, params)
+		result, err := c.Get[[]Customer](context.Background(), srv.URL, params)
 		if err != nil {
 			return nil, err
 		}
@@ -97,7 +97,7 @@ func TestAPIErrorDecodesMessage(t *testing.T) {
 	defer srv.Close()
 
 	c := &Client{httpClient: httpx.NewClient(nil, nil, 0)}
-	_, err := get[[]Customer](context.Background(), c, srv.URL, nil)
+	_, err := c.Get[[]Customer](context.Background(), srv.URL, nil)
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}

@@ -16,27 +16,27 @@ func callbackIDEndpoint(callbackID int) string {
 }
 
 func (c *Client) PostCallback(ctx context.Context, webhook *Callback) (*Callback, error) {
-	return post[Callback](ctx, c, "system/callbacks", webhook)
+	return c.Post[Callback](ctx, "system/callbacks", webhook)
 }
 
 func (c *Client) ListCallbacks(ctx context.Context, params map[string]string, opts ...ListOption) ([]Callback, error) {
-	return getMany[Callback](ctx, c, "system/callbacks", params, opts...)
+	return c.GetMany[Callback](ctx, "system/callbacks", params, opts...)
 }
 
 func (c *Client) GetCallback(ctx context.Context, callbackID int, params map[string]string) (*Callback, error) {
-	return get[Callback](ctx, c, callbackIDEndpoint(callbackID), params)
+	return c.Get[Callback](ctx, callbackIDEndpoint(callbackID), params)
 }
 
 func (c *Client) PutCallback(ctx context.Context, callbackID int, webhook *Callback) (*Callback, error) {
-	return put[Callback](ctx, c, callbackIDEndpoint(callbackID), webhook)
+	return c.Put[Callback](ctx, callbackIDEndpoint(callbackID), webhook)
 }
 
 func (c *Client) PatchCallback(ctx context.Context, callbackID int, patchOps []PatchOp) (*Callback, error) {
-	return patch[Callback](ctx, c, callbackIDEndpoint(callbackID), patchOps)
+	return c.Patch[Callback](ctx, callbackIDEndpoint(callbackID), patchOps)
 }
 
 func (c *Client) DeleteCallback(ctx context.Context, callbackID int) error {
-	return del(ctx, c, callbackIDEndpoint(callbackID))
+	return c.Delete(ctx, callbackIDEndpoint(callbackID))
 }
 
 func ValidateWebhook(r *http.Request) (bool, error) {

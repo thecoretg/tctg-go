@@ -31,7 +31,7 @@ func TestClientSendsAPIKey(t *testing.T) {
 
 	// Hit the test server directly (bypassing baseURL) through the client's
 	// configured transport so the header injection is exercised end to end.
-	if _, err := get[struct{}](context.Background(), c, srv.URL, nil); err != nil {
+	if _, err := c.Get[struct{}](context.Background(), srv.URL, nil); err != nil {
 		t.Fatalf("request: %v", err)
 	}
 	if gotKey != wantKey {

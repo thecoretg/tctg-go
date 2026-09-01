@@ -51,7 +51,7 @@ type membershipEnvelope struct {
 
 // ListMemberships returns a single page of memberships.
 func (c *Client) ListMemberships(ctx context.Context, params map[string]string) (*MembershipsResponse, error) {
-	result, err := get[MembershipsResponse](ctx, c, endpointURL("memberships"), params)
+	result, err := c.Get[MembershipsResponse](ctx, endpointURL("memberships"), params)
 	if err != nil {
 		return nil, fmt.Errorf("list memberships: %w", err)
 	}
@@ -60,7 +60,7 @@ func (c *Client) ListMemberships(ctx context.Context, params map[string]string) 
 
 // GetMembership returns a single membership by ID.
 func (c *Client) GetMembership(ctx context.Context, id int64) (*Membership, error) {
-	result, err := get[membershipEnvelope](ctx, c, endpointURL(fmt.Sprintf("memberships/%d", id)), nil)
+	result, err := c.Get[membershipEnvelope](ctx, endpointURL(fmt.Sprintf("memberships/%d", id)), nil)
 	if err != nil {
 		return nil, fmt.Errorf("get membership: %w", err)
 	}
@@ -69,7 +69,7 @@ func (c *Client) GetMembership(ctx context.Context, id int64) (*Membership, erro
 
 // CreateMembership invites a user and creates a membership.
 func (c *Client) CreateMembership(ctx context.Context, body MembershipCreationParameters) (*MemberInvitation, error) {
-	result, err := post[MemberInvitation](ctx, c, endpointURL("memberships"), body)
+	result, err := c.Post[MemberInvitation](ctx, endpointURL("memberships"), body)
 	if err != nil {
 		return nil, fmt.Errorf("create membership: %w", err)
 	}
@@ -78,7 +78,7 @@ func (c *Client) CreateMembership(ctx context.Context, body MembershipCreationPa
 
 // UpdateMembership updates a user's membership permissions.
 func (c *Client) UpdateMembership(ctx context.Context, id int64, body MembershipUpdateParameters) (*Membership, error) {
-	result, err := patch[Membership](ctx, c, endpointURL(fmt.Sprintf("memberships/%d", id)), body)
+	result, err := c.Patch[Membership](ctx, endpointURL(fmt.Sprintf("memberships/%d", id)), body)
 	if err != nil {
 		return nil, fmt.Errorf("update membership: %w", err)
 	}
@@ -87,7 +87,7 @@ func (c *Client) UpdateMembership(ctx context.Context, id int64, body Membership
 
 // DeleteMembership deletes a membership.
 func (c *Client) DeleteMembership(ctx context.Context, id int64) error {
-	if err := del(ctx, c, endpointURL(fmt.Sprintf("memberships/%d", id))); err != nil {
+	if err := c.Delete(ctx, endpointURL(fmt.Sprintf("memberships/%d", id))); err != nil {
 		return fmt.Errorf("delete membership: %w", err)
 	}
 	return nil
@@ -96,7 +96,7 @@ func (c *Client) DeleteMembership(ctx context.Context, id int64) error {
 // ListAccountMemberships returns a single page of memberships for an account
 // (Reseller credentials only).
 func (c *Client) ListAccountMemberships(ctx context.Context, accountID int64, params map[string]string) (*MembershipsResponse, error) {
-	result, err := get[MembershipsResponse](ctx, c, endpointURL(fmt.Sprintf("accounts/%d/memberships", accountID)), params)
+	result, err := c.Get[MembershipsResponse](ctx, endpointURL(fmt.Sprintf("accounts/%d/memberships", accountID)), params)
 	if err != nil {
 		return nil, fmt.Errorf("list account memberships: %w", err)
 	}
@@ -106,7 +106,7 @@ func (c *Client) ListAccountMemberships(ctx context.Context, accountID int64, pa
 // GetAccountMembership returns a single membership for an account (Reseller
 // credentials only).
 func (c *Client) GetAccountMembership(ctx context.Context, accountID, id int64) (*Membership, error) {
-	result, err := get[membershipEnvelope](ctx, c, endpointURL(fmt.Sprintf("accounts/%d/memberships/%d", accountID, id)), nil)
+	result, err := c.Get[membershipEnvelope](ctx, endpointURL(fmt.Sprintf("accounts/%d/memberships/%d", accountID, id)), nil)
 	if err != nil {
 		return nil, fmt.Errorf("get account membership: %w", err)
 	}
@@ -115,7 +115,7 @@ func (c *Client) GetAccountMembership(ctx context.Context, accountID, id int64) 
 
 // CreateAccountMembership invites a user to an account (Reseller credentials only).
 func (c *Client) CreateAccountMembership(ctx context.Context, accountID int64, body MembershipCreationParameters) (*MemberInvitation, error) {
-	result, err := post[MemberInvitation](ctx, c, endpointURL(fmt.Sprintf("accounts/%d/memberships", accountID)), body)
+	result, err := c.Post[MemberInvitation](ctx, endpointURL(fmt.Sprintf("accounts/%d/memberships", accountID)), body)
 	if err != nil {
 		return nil, fmt.Errorf("create account membership: %w", err)
 	}
@@ -125,7 +125,7 @@ func (c *Client) CreateAccountMembership(ctx context.Context, accountID int64, b
 // UpdateAccountMembership updates a membership within an account (Reseller
 // credentials only).
 func (c *Client) UpdateAccountMembership(ctx context.Context, accountID, id int64, body MembershipUpdateParameters) (*Membership, error) {
-	result, err := patch[Membership](ctx, c, endpointURL(fmt.Sprintf("accounts/%d/memberships/%d", accountID, id)), body)
+	result, err := c.Patch[Membership](ctx, endpointURL(fmt.Sprintf("accounts/%d/memberships/%d", accountID, id)), body)
 	if err != nil {
 		return nil, fmt.Errorf("update account membership: %w", err)
 	}
@@ -135,7 +135,7 @@ func (c *Client) UpdateAccountMembership(ctx context.Context, accountID, id int6
 // DeleteAccountMembership deletes a membership within an account (Reseller
 // credentials only).
 func (c *Client) DeleteAccountMembership(ctx context.Context, accountID, id int64) error {
-	if err := del(ctx, c, endpointURL(fmt.Sprintf("accounts/%d/memberships/%d", accountID, id))); err != nil {
+	if err := c.Delete(ctx, endpointURL(fmt.Sprintf("accounts/%d/memberships/%d", accountID, id))); err != nil {
 		return fmt.Errorf("delete account membership: %w", err)
 	}
 	return nil

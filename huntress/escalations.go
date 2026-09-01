@@ -47,7 +47,7 @@ type EscalationsResponse struct {
 
 // ListEscalations returns a single page of escalations.
 func (c *Client) ListEscalations(ctx context.Context, params map[string]string) (*EscalationsResponse, error) {
-	result, err := get[EscalationsResponse](ctx, c, endpointURL("escalations"), params)
+	result, err := c.Get[EscalationsResponse](ctx, endpointURL("escalations"), params)
 	if err != nil {
 		return nil, fmt.Errorf("list escalations: %w", err)
 	}
@@ -56,7 +56,7 @@ func (c *Client) ListEscalations(ctx context.Context, params map[string]string) 
 
 // GetEscalation returns a single escalation by ID, including its entities.
 func (c *Client) GetEscalation(ctx context.Context, id int64) (*EscalationWithEntities, error) {
-	result, err := get[EscalationWithEntities](ctx, c, endpointURL(fmt.Sprintf("escalations/%d", id)), nil)
+	result, err := c.Get[EscalationWithEntities](ctx, endpointURL(fmt.Sprintf("escalations/%d", id)), nil)
 	if err != nil {
 		return nil, fmt.Errorf("get escalation: %w", err)
 	}
@@ -65,7 +65,7 @@ func (c *Client) GetEscalation(ctx context.Context, id int64) (*EscalationWithEn
 
 // ResolveEscalation creates a resolution for an escalation.
 func (c *Client) ResolveEscalation(ctx context.Context, id int64, body EscalationResolutionParameters) (*EscalationResolution, error) {
-	result, err := post[EscalationResolution](ctx, c, endpointURL(fmt.Sprintf("escalations/%d/resolution", id)), body)
+	result, err := c.Post[EscalationResolution](ctx, endpointURL(fmt.Sprintf("escalations/%d/resolution", id)), body)
 	if err != nil {
 		return nil, fmt.Errorf("resolve escalation: %w", err)
 	}

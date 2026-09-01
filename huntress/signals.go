@@ -28,7 +28,7 @@ type SignalsResponse struct {
 
 // ListSignals returns a single page of signals.
 func (c *Client) ListSignals(ctx context.Context, params map[string]string) (*SignalsResponse, error) {
-	result, err := get[SignalsResponse](ctx, c, endpointURL("signals"), params)
+	result, err := c.Get[SignalsResponse](ctx, endpointURL("signals"), params)
 	if err != nil {
 		return nil, fmt.Errorf("list signals: %w", err)
 	}
@@ -37,7 +37,7 @@ func (c *Client) ListSignals(ctx context.Context, params map[string]string) (*Si
 
 // GetSignal returns a single signal by ID.
 func (c *Client) GetSignal(ctx context.Context, id int64) (*Signal, error) {
-	result, err := get[Signal](ctx, c, endpointURL(fmt.Sprintf("signals/%d", id)), nil)
+	result, err := c.Get[Signal](ctx, endpointURL(fmt.Sprintf("signals/%d", id)), nil)
 	if err != nil {
 		return nil, fmt.Errorf("get signal: %w", err)
 	}
@@ -47,7 +47,7 @@ func (c *Client) GetSignal(ctx context.Context, id int64) (*Signal, error) {
 // ListAccountSignals returns a single page of signals for an account (Reseller
 // credentials only).
 func (c *Client) ListAccountSignals(ctx context.Context, accountID int64, params map[string]string) (*SignalsResponse, error) {
-	result, err := get[SignalsResponse](ctx, c, endpointURL(fmt.Sprintf("accounts/%d/signals", accountID)), params)
+	result, err := c.Get[SignalsResponse](ctx, endpointURL(fmt.Sprintf("accounts/%d/signals", accountID)), params)
 	if err != nil {
 		return nil, fmt.Errorf("list account signals: %w", err)
 	}
@@ -56,7 +56,7 @@ func (c *Client) ListAccountSignals(ctx context.Context, accountID int64, params
 
 // GetAccountSignal returns a single signal for an account (Reseller credentials only).
 func (c *Client) GetAccountSignal(ctx context.Context, accountID, id int64) (*Signal, error) {
-	result, err := get[Signal](ctx, c, endpointURL(fmt.Sprintf("accounts/%d/signals/%d", accountID, id)), nil)
+	result, err := c.Get[Signal](ctx, endpointURL(fmt.Sprintf("accounts/%d/signals/%d", accountID, id)), nil)
 	if err != nil {
 		return nil, fmt.Errorf("get account signal: %w", err)
 	}

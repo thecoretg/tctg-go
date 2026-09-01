@@ -54,7 +54,7 @@ func TestCollectPagedStopsOnEmptyToken(t *testing.T) {
 	}
 }
 
-// TestListPagingAndAuth drives the real get helper, cursor pagination, and
+// TestListPagingAndAuth drives the real Get helper, cursor pagination, and
 // HTTP Basic auth against a stub server: a first page with a next-page token
 // followed by a final page with an empty token.
 func TestListPagingAndAuth(t *testing.T) {
@@ -79,7 +79,7 @@ func TestListPagingAndAuth(t *testing.T) {
 	}
 
 	all, err := collectPaged(func(token string) ([]Organization, Pagination, error) {
-		resp, err := get[OrganizationsResponse](context.Background(), c, srv.URL, pageParams(nil, token))
+		resp, err := c.Get[OrganizationsResponse](context.Background(), srv.URL, pageParams(nil, token))
 		if err != nil {
 			return nil, Pagination{}, err
 		}
@@ -110,7 +110,7 @@ func TestAPIErrorDecodesMessage(t *testing.T) {
 	defer srv.Close()
 
 	c := &Client{httpClient: httpx.NewClient(nil, nil, 0)}
-	_, err := get[AccountsResponse](context.Background(), c, srv.URL, nil)
+	_, err := c.Get[AccountsResponse](context.Background(), srv.URL, nil)
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}

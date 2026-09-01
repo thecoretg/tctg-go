@@ -15,7 +15,7 @@ type Actor struct {
 
 // GetActor returns the actor (reseller/account/user) for the API credentials.
 func (c *Client) GetActor(ctx context.Context) (*Actor, error) {
-	result, err := get[Actor](ctx, c, endpointURL("actor"), nil)
+	result, err := c.Get[Actor](ctx, endpointURL("actor"), nil)
 	if err != nil {
 		return nil, fmt.Errorf("get actor: %w", err)
 	}

@@ -284,7 +284,7 @@ func TestReplayResendsRequestBody(t *testing.T) {
 }
 
 // TestNotFoundIsErrNotFoundOnEveryMethod pins the 404 sentinel across the
-// helpers: post and patch previously returned an opaque error, so callers could
+// helpers: Post and Patch previously returned an opaque error, so callers could
 // not tell a missing record from any other failure.
 func TestNotFoundIsErrNotFoundOnEveryMethod(t *testing.T) {
 	f := &fakeAutomate{respond: func(*fakeAutomate, dataCall, int) (int, string) {
