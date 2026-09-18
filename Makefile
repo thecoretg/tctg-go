@@ -18,16 +18,3 @@ test-iru:
 test-entra:
 	go test -v ./entra/...
 
-# --- Lambda targets (delegate to each lambda's Makefile) ---
-# Usage: make lambda-<name> [ARGS="<target>"]
-# Example: make lambda-threatdown-site-list ARGS=lambda
-
-LAMBDA_DIRS := $(wildcard lambdas/*/Makefile)
-LAMBDAS     := $(patsubst lambdas/%/Makefile,%,$(LAMBDA_DIRS))
-
-.PHONY: lambdas $(addprefix lambda-,$(LAMBDAS))
-
-lambdas: $(addprefix lambda-,$(LAMBDAS))
-
-$(addprefix lambda-,$(LAMBDAS)): lambda-%:
-	$(MAKE) -C lambdas/$* $(ARGS)
