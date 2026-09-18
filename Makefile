@@ -1,4 +1,4 @@
-.PHONY: test test-td test-rewst test-sf test-iru
+.PHONY: test test-td test-rewst test-sf test-iru test-entra
 
 test:
 	go test -v ./...
@@ -14,6 +14,9 @@ test-sf:
 
 test-iru:
 	go test -v ./iru/...
+
+test-entra:
+	go test -v ./entra/...
 
 # --- Lambda targets (delegate to each lambda's Makefile) ---
 # Usage: make lambda-<name> [ARGS="<target>"]
