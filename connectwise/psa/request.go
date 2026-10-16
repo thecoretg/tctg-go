@@ -14,7 +14,29 @@ const (
 	defaultBaseURL = "https://api-na.myconnectwise.net/v4_6_release/apis/3.0"
 )
 
-var ErrNotFound = errors.New("404 status returned")
+var (
+	ErrNotFound = errors.New("404 status returned")
+	// ErrForbidden is a 403. ConnectWise also answers 403 for a record the API can no longer reach
+	// although it still exists, such as a ticket merged into another, so it is not always a
+	// permissions problem.
+	ErrForbidden = errors.New("403 status returned")
+)
+
+// checkStatus turns an error response into an error, mapping 404 to ErrNotFound and 403 to
+// ErrForbidden so callers can match them with errors.Is whatever the method. A 403 keeps the
+// response body, which says why ConnectWise refused.
+func checkStatus(res *httpx.Response) error {
+	switch {
+	case res.StatusCode < 400:
+		return nil
+	case res.StatusCode == http.StatusNotFound:
+		return ErrNotFound
+	case res.StatusCode == http.StatusForbidden:
+		return fmt.Errorf("error response from ConnectWise API: %w: %s", ErrForbidden, res.Body)
+	default:
+		return fmt.Errorf("error response from ConnectWise API: %s", res.Body)
+	}
+}
 
 // Get issues a GET request and decodes the JSON response into T.
 func (c *Client) Get[T any](ctx context.Context, endpoint string, params map[string]string) (*T, error) {
@@ -23,11 +45,8 @@ func (c *Client) Get[T any](ctx context.Context, endpoint string, params map[str
 		return nil, err
 	}
 
-	if res.StatusCode >= 400 {
-		if res.StatusCode == http.StatusNotFound {
-			return nil, ErrNotFound
-		}
-		return nil, fmt.Errorf("error response from ConnectWise API: %s", res.Body)
+	if err := checkStatus(res); err != nil {
+		return nil, err
 	}
 
 	var target T
@@ -54,11 +73,8 @@ func (c *Client) GetMany[T any](ctx context.Context, endpoint string, params map
 			return nil, err
 		}
 
-		if res.StatusCode >= 400 {
-			if res.StatusCode == http.StatusNotFound {
-				return nil, ErrNotFound
-			}
-			return nil, fmt.Errorf("error response from ConnectWise API: %s", res.Body)
+		if err := checkStatus(res); err != nil {
+			return nil, err
 		}
 
 		var target []T
@@ -85,8 +101,8 @@ func (c *Client) Post[T any](ctx context.Context, endpoint string, body any) (*T
 		return nil, err
 	}
 
-	if res.StatusCode >= 400 {
-		return nil, fmt.Errorf("error response from ConnectWise API: %s", res.Body)
+	if err := checkStatus(res); err != nil {
+		return nil, err
 	}
 
 	var target T
@@ -103,11 +119,8 @@ func (c *Client) Put[T any](ctx context.Context, endpoint string, body any) (*T,
 		return nil, err
 	}
 
-	if res.StatusCode >= 400 {
-		if res.StatusCode == http.StatusNotFound {
-			return nil, ErrNotFound
-		}
-		return nil, fmt.Errorf("error response from ConnectWise API: %s", res.Body)
+	if err := checkStatus(res); err != nil {
+		return nil, err
 	}
 
 	var target T
@@ -124,8 +137,8 @@ func (c *Client) Patch[T any](ctx context.Context, endpoint string, patchOps []P
 		return nil, err
 	}
 
-	if res.StatusCode >= 400 {
-		return nil, fmt.Errorf("error response from ConnectWise API: %s", res.Body)
+	if err := checkStatus(res); err != nil {
+		return nil, err
 	}
 
 	var target T
@@ -142,14 +155,7 @@ func (c *Client) Delete(ctx context.Context, endpoint string) error {
 		return err
 	}
 
-	if res.StatusCode >= 400 {
-		if res.StatusCode == http.StatusNotFound {
-			return ErrNotFound
-		}
-		return fmt.Errorf("error response from ConnectWise API: %s", res.Body)
-	}
-
-	return nil
+	return checkStatus(res)
 }
 
 func (c *Client) endpointURL(endpoint string) string {
