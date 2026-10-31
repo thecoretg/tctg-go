@@ -32,7 +32,8 @@ type Error struct {
 func (e *Error) Error() string {
 	var b strings.Builder
 	if e.Service != "" {
-		b.WriteString(e.Service + " ")
+		b.WriteString(e.Service)
+		b.WriteByte(' ')
 	}
 	b.WriteString("rate limit exceeded")
 	if e.StatusCode != 0 {
@@ -42,7 +43,8 @@ func (e *Error) Error() string {
 		fmt.Fprintf(&b, "; retry after %s", e.RetryAfter)
 	}
 	if e.Message != "" {
-		b.WriteString(": " + e.Message)
+		b.WriteString(": ")
+		b.WriteString(e.Message)
 	}
 	return b.String()
 }

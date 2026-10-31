@@ -13,6 +13,10 @@
 //     when several processes use the same key.
 //   - Pass None to turn pacing off.
 //
+// Two kinds of limiter fit: a token bucket (*rate.Limiter) for a steady rate,
+// and NewWindow's sliding log for an API that counts a sliding window, which it
+// matches exactly instead of approximating with a burst of 1.
+//
 // A limiter only coordinates the requests that go through it. Another process
 // using the same API key spends the same quota without this one knowing.
 package ratelimit

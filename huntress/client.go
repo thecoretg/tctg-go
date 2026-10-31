@@ -14,8 +14,6 @@ import (
 	"strings"
 	"time"
 
-	"golang.org/x/time/rate"
-
 	"github.com/thecoretg/tctg-go/internal/httpx"
 	"github.com/thecoretg/tctg-go/ratelimit"
 )
@@ -64,11 +62,14 @@ func NewClient(_ context.Context, cfg Config) (*Client, error) {
 }
 
 // DefaultLimiter paces a client to Huntress's limit of 60 requests per minute,
-// a sliding window counted per account. One request every 60/59 seconds with
-// no burst keeps any 60-second span at 60 requests or fewer. Each call returns
-// a new limiter.
-func DefaultLimiter() *rate.Limiter {
-	return rate.NewLimiter(rate.Every(time.Minute/59), 1)
+// a sliding window counted per account: no more than 60 requests in any
+// 60-second span. A sliding-log limiter matches that exactly, so up to 60
+// requests go out at once when the window is empty. The window is 61 seconds
+// rather than 60 because Huntress times a request when it arrives, not when it
+// was sent, and network delay varies between requests. Each call returns a new
+// limiter.
+func DefaultLimiter() *ratelimit.Window {
+	return ratelimit.NewWindow(60, 61*time.Second)
 }
 
 func NewClientFromEnv(ctx context.Context) (*Client, error) {
