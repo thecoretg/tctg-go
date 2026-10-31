@@ -18,7 +18,7 @@ import (
 // newStubClient points a Client at srv so the query helpers can be exercised
 // without Salesforce credentials.
 func newStubClient(srv *httptest.Server) *Client {
-	return &Client{httpClient: httpx.NewClient(nil, nil, 0), baseURL: srv.URL}
+	return &Client{httpClient: httpx.NewClient(nil, nil, httpx.Policy{}), baseURL: srv.URL}
 }
 
 func newTestClient(t *testing.T) *Client {

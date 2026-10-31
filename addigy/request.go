@@ -15,6 +15,9 @@ var ErrNotFound = errors.New("404 status returned")
 // apiError formats an error response from the Addigy API, decoding the standard
 // ErrorResponse body when present for a clearer message.
 func apiError(res *httpx.Response) error {
+	if res.StatusCode == http.StatusTooManyRequests {
+		return fmt.Errorf("addigy rate limit exceeded (1000 requests per 10s); the API key may now be blocked for 24 hours, do not retry: %s [429]", res.Body)
+	}
 	var er ErrorResponse
 	if err := json.Unmarshal(res.Body, &er); err == nil && er.Message != "" {
 		return fmt.Errorf("error response from Addigy API: %s [%d]", er.Message, res.StatusCode)

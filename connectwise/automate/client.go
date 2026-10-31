@@ -95,7 +95,7 @@ func NewClient(ctx context.Context, cfg Config) (*Client, error) {
 	c.httpClient = httpx.NewClient(base, map[string]string{
 		"Content-Type": "application/json",
 		"Accept":       "application/json",
-	}, 3)
+	}, httpx.Policy{Retries: 3})
 
 	if cfg.Token == "" {
 		if _, err := c.Login(ctx); err != nil {

@@ -48,7 +48,7 @@ func NewClient(_ context.Context, cfg Config) (*Client, error) {
 		"Accept":        "application/json",
 	}
 
-	return &Client{httpClient: httpx.NewClient(nil, headers, 3)}, nil
+	return &Client{httpClient: httpx.NewClient(nil, headers, httpx.Policy{Retries: 3})}, nil
 }
 
 func NewClientFromEnv(ctx context.Context) (*Client, error) {

@@ -53,7 +53,7 @@ func NewClient(_ context.Context, cfg Config) (*Client, error) {
 		"clientId":      cfg.ClientID,
 	}
 
-	return &Client{httpClient: httpx.NewClient(nil, headers, 3), baseURL: defaultBaseURL}, nil
+	return &Client{httpClient: httpx.NewClient(nil, headers, httpx.Policy{Retries: 3}), baseURL: defaultBaseURL}, nil
 }
 
 func NewClientFromEnv(ctx context.Context) (*Client, error) {

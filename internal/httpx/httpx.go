@@ -21,25 +21,35 @@ const (
 	backoffMax  = 2 * time.Second
 )
 
+// Policy controls how a client retries failed requests.
+type Policy struct {
+	// Retries is how many times a failed request is retried after its first
+	// attempt.
+	Retries int
+	// CheckRetry reports whether a failed attempt should be retried. nil uses
+	// DefaultCheckRetry.
+	CheckRetry func(resp *http.Response, err error) bool
+}
+
 // NewClient builds an *http.Client whose transport injects headers on every
-// request and retries safe failures up to retries times. base may be nil, in
-// which case http.DefaultTransport is used; pass a non-nil base (e.g. an
-// oauth2 transport) to layer retry on top of it.
-func NewClient(base http.RoundTripper, headers map[string]string, retries int) *http.Client {
+// request and retries failures according to p. base may be nil, in which case
+// http.DefaultTransport is used; pass a non-nil base (e.g. an oauth2
+// transport) to layer retry on top of it.
+func NewClient(base http.RoundTripper, headers map[string]string, p Policy) *http.Client {
 	return &http.Client{
-		Transport: &RetryTransport{Base: base, Headers: headers, Retries: retries},
+		Transport: &RetryTransport{Base: base, Headers: headers, Policy: p},
 	}
 }
 
 // RetryTransport wraps a base RoundTripper. It sets any configured Headers that
-// the request does not already carry, then retries transport errors, 429, and
-// 5xx responses up to Retries times using exponential backoff with jitter. It
-// honors a Retry-After header when present and aborts as soon as the request
-// context is cancelled.
+// the request does not already carry, then retries failures that CheckRetry
+// accepts up to Retries times using exponential backoff with jitter. It honors
+// a Retry-After header when present and aborts as soon as the request context
+// is cancelled.
 type RetryTransport struct {
 	Base    http.RoundTripper
 	Headers map[string]string
-	Retries int
+	Policy
 }
 
 func (t *RetryTransport) base() http.RoundTripper {
@@ -64,9 +74,13 @@ func (t *RetryTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 		resp *http.Response
 		err  error
 	)
+	check := t.CheckRetry
+	if check == nil {
+		check = DefaultCheckRetry
+	}
 	for attempt := 0; ; attempt++ {
 		resp, err = t.base().RoundTrip(req)
-		if attempt >= t.Retries || !shouldRetry(resp, err) {
+		if attempt >= t.Retries || !check(resp, err) {
 			return resp, err
 		}
 
@@ -107,11 +121,22 @@ func (t *RetryTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	}
 }
 
-func shouldRetry(resp *http.Response, err error) bool {
+// DefaultCheckRetry retries transport errors, 429, and 5xx responses.
+func DefaultCheckRetry(resp *http.Response, err error) bool {
 	if err != nil {
 		return true
 	}
 	return resp.StatusCode == http.StatusTooManyRequests || resp.StatusCode >= 500
+}
+
+// NoRetryOn429 is DefaultCheckRetry without the 429 retry. Use it for APIs
+// that punish a request sent after a 429, such as Addigy, which blocks the API
+// key for 24 hours once its limit is exceeded.
+func NoRetryOn429(resp *http.Response, err error) bool {
+	if err == nil && resp.StatusCode == http.StatusTooManyRequests {
+		return false
+	}
+	return DefaultCheckRetry(resp, err)
 }
 
 func retryAfter(resp *http.Response) time.Duration {

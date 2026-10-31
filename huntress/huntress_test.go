@@ -109,7 +109,7 @@ func TestAPIErrorDecodesMessage(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	c := &Client{httpClient: httpx.NewClient(nil, nil, 0)}
+	c := &Client{httpClient: httpx.NewClient(nil, nil, httpx.Policy{})}
 	_, err := c.Get[AccountsResponse](context.Background(), srv.URL, nil)
 	if err == nil {
 		t.Fatal("expected error, got nil")

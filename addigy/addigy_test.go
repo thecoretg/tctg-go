@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strings"
+	"sync/atomic"
 	"testing"
 
 	"github.com/joho/godotenv"
@@ -36,6 +38,30 @@ func TestClientSendsAPIKey(t *testing.T) {
 	}
 	if gotKey != wantKey {
 		t.Fatalf("x-api-key header = %q, want %q", gotKey, wantKey)
+	}
+}
+
+// TestClientNeverRetries429 pins the 24-hour lockout guard: a 429 must reach
+// Addigy exactly once, because every further request extends the block.
+func TestClientNeverRetries429(t *testing.T) {
+	var hits atomic.Int32
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		hits.Add(1)
+		w.WriteHeader(http.StatusTooManyRequests)
+	}))
+	defer srv.Close()
+
+	c, err := NewClient(context.Background(), Config{APIKey: "test-key"})
+	if err != nil {
+		t.Fatalf("NewClient: %v", err)
+	}
+
+	_, err = c.Get[struct{}](context.Background(), srv.URL, nil)
+	if err == nil || !strings.Contains(err.Error(), "24 hours") {
+		t.Errorf("error = %v, want the 24-hour lockout warning", err)
+	}
+	if got := hits.Load(); got != 1 {
+		t.Errorf("requests = %d, want 1", got)
 	}
 }
 

@@ -54,8 +54,11 @@ func NewClient(_ context.Context, cfg Config) (*Client, error) {
 		"Accept":       "application/json",
 	}
 
+	// Addigy allows 1000 requests per 10 seconds and blocks the API key for 24
+	// hours once that is exceeded, so a 429 is never retried: by the time one
+	// arrives the block has likely begun, and another request only extends it.
 	return &Client{
-		httpClient: httpx.NewClient(nil, headers, 3),
+		httpClient: httpx.NewClient(nil, headers, httpx.Policy{Retries: 3, CheckRetry: httpx.NoRetryOn429}),
 		orgID:      cfg.OrgID,
 	}, nil
 }

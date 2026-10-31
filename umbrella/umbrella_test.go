@@ -67,7 +67,7 @@ func TestListCustomersPaging(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	c := &Client{httpClient: httpx.NewClient(nil, nil, 0)}
+	c := &Client{httpClient: httpx.NewClient(nil, nil, httpx.Policy{})}
 	all, err := collectPaged(1, limit, func(page, l int) ([]Customer, error) {
 		params := map[string]string{"page": strconv.Itoa(page), "limit": strconv.Itoa(l)}
 		result, err := c.Get[[]Customer](context.Background(), srv.URL, params)
@@ -96,7 +96,7 @@ func TestAPIErrorDecodesMessage(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	c := &Client{httpClient: httpx.NewClient(nil, nil, 0)}
+	c := &Client{httpClient: httpx.NewClient(nil, nil, httpx.Policy{})}
 	_, err := c.Get[[]Customer](context.Background(), srv.URL, nil)
 	if err == nil {
 		t.Fatal("expected error, got nil")

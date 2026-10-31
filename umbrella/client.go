@@ -57,7 +57,7 @@ func NewClient(ctx context.Context, cfg Config) (*Client, error) {
 	}).TokenSource(ctx)
 
 	oauthClient := oauth2.NewClient(ctx, ts)
-	hc := httpx.NewClient(oauthClient.Transport, map[string]string{"Accept": "application/json"}, 3)
+	hc := httpx.NewClient(oauthClient.Transport, map[string]string{"Accept": "application/json"}, httpx.Policy{Retries: 3})
 
 	return &Client{httpClient: hc}, nil
 }
