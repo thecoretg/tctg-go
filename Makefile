@@ -1,4 +1,4 @@
-.PHONY: test test-td test-rewst test-sf test-iru test-entra
+.PHONY: test test-td test-rewst test-sf test-entra
 
 test:
 	go test -v ./...
@@ -11,9 +11,6 @@ test-rewst:
 
 test-sf:
 	go test -v ./salesforce/...
-
-test-iru:
-	go test -v ./iru/...
 
 test-entra:
 	go test -v ./entra/...
