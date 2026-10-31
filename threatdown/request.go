@@ -12,6 +12,15 @@ import (
 
 var ErrNotFound = errors.New("404 status returned")
 
+// apiError turns an error response into an error, mapping 429 to a
+// *ratelimit.Error.
+func apiError(res *httpx.Response) error {
+	if res.StatusCode == http.StatusTooManyRequests {
+		return httpx.RateLimitError("threatdown", res)
+	}
+	return fmt.Errorf("error response from Threatdown API: %s [%d]", res.Body, res.StatusCode)
+}
+
 // Get issues a GET request and decodes the JSON response into T.
 func (c *Client) Get[T any](ctx context.Context, url string, params map[string]string) (*T, error) {
 	res, err := httpx.Do(ctx, c.httpClient, http.MethodGet, url, params, nil)
@@ -23,7 +32,7 @@ func (c *Client) Get[T any](ctx context.Context, url string, params map[string]s
 		if res.StatusCode == http.StatusNotFound {
 			return nil, ErrNotFound
 		}
-		return nil, fmt.Errorf("error response from Threatdown API: %s [%d]", res.Body, res.StatusCode)
+		return nil, apiError(res)
 	}
 
 	var target T
@@ -41,7 +50,7 @@ func (c *Client) Post[T any](ctx context.Context, url string, body any) (*T, err
 	}
 
 	if res.StatusCode >= 400 {
-		return nil, fmt.Errorf("error response from Threatdown API: %s [%d]", res.Body, res.StatusCode)
+		return nil, apiError(res)
 	}
 
 	var target T
@@ -62,7 +71,7 @@ func (c *Client) Put[T any](ctx context.Context, url string, body any) (*T, erro
 		if res.StatusCode == http.StatusNotFound {
 			return nil, ErrNotFound
 		}
-		return nil, fmt.Errorf("error response from Threatdown API: %s [%d]", res.Body, res.StatusCode)
+		return nil, apiError(res)
 	}
 
 	var target T
@@ -112,7 +121,7 @@ func (c *Client) Delete(ctx context.Context, url string) error {
 		if res.StatusCode == http.StatusNotFound {
 			return ErrNotFound
 		}
-		return fmt.Errorf("error response from Threatdown API: %s [%d]", res.Body, res.StatusCode)
+		return apiError(res)
 	}
 
 	return nil

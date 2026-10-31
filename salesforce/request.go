@@ -1,6 +1,7 @@
 package salesforce
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -18,6 +19,14 @@ type queryResp[T any] struct {
 }
 
 var ErrNotFound = errors.New("404 status returned")
+
+// isRateLimited reports a refusal for exceeding an API limit. Salesforce
+// answers its daily request quota with 403 REQUEST_LIMIT_EXCEEDED rather than
+// 429; a retry cannot succeed until the 24-hour window frees capacity.
+func isRateLimited(res *httpx.Response) bool {
+	return res.StatusCode == http.StatusTooManyRequests ||
+		(res.StatusCode == http.StatusForbidden && bytes.Contains(res.Body, []byte("REQUEST_LIMIT_EXCEEDED")))
+}
 
 // Query executes a SOQL query and returns all records, following nextRecordsUrl
 // pages until Salesforce signals done. Records are decoded into T exactly as
@@ -87,6 +96,9 @@ func (c *Client) Get[T any](ctx context.Context, url string, params map[string]s
 	if res.StatusCode >= 400 {
 		if res.StatusCode == http.StatusNotFound {
 			return nil, ErrNotFound
+		}
+		if isRateLimited(res) {
+			return nil, httpx.RateLimitError("salesforce", res)
 		}
 		return nil, fmt.Errorf("error response from Salesforce: %s [%d]", res.Body, res.StatusCode)
 	}

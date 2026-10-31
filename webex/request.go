@@ -16,6 +16,15 @@ const (
 
 var ErrNotFound = errors.New("404 status returned")
 
+// apiError turns an error response into an error, mapping 429 to a
+// *ratelimit.Error.
+func apiError(res *httpx.Response) error {
+	if res.StatusCode == http.StatusTooManyRequests {
+		return httpx.RateLimitError("webex", res)
+	}
+	return fmt.Errorf("error response from Webex API: %s", res.Body)
+}
+
 // Get issues a GET request and decodes the JSON response into T.
 func (c *Client) Get[T any](ctx context.Context, endpoint string, params map[string]string) (*T, error) {
 	res, err := httpx.Do(ctx, c.httpClient, http.MethodGet, fullURL(baseURL, endpoint), params, nil)
@@ -27,7 +36,7 @@ func (c *Client) Get[T any](ctx context.Context, endpoint string, params map[str
 		if res.StatusCode == http.StatusNotFound {
 			return nil, ErrNotFound
 		}
-		return nil, fmt.Errorf("error response from Webex API: %s", res.Body)
+		return nil, apiError(res)
 	}
 
 	var target T
@@ -53,7 +62,7 @@ func (c *Client) GetMany[T any](ctx context.Context, endpoint string, params map
 			if res.StatusCode == http.StatusNotFound {
 				return nil, ErrNotFound
 			}
-			return nil, fmt.Errorf("error response from Webex API: %s", res.Body)
+			return nil, apiError(res)
 		}
 
 		var target []T
@@ -77,7 +86,7 @@ func (c *Client) Post[T any](ctx context.Context, endpoint string, body any) (*T
 	}
 
 	if res.StatusCode >= 400 {
-		return nil, fmt.Errorf("error response from Webex API: %s", res.Body)
+		return nil, apiError(res)
 	}
 
 	var target T
@@ -98,7 +107,7 @@ func (c *Client) Put[T any](ctx context.Context, endpoint string, body any) (*T,
 		if res.StatusCode == http.StatusNotFound {
 			return nil, ErrNotFound
 		}
-		return nil, fmt.Errorf("error response from Webex API: %s", res.Body)
+		return nil, apiError(res)
 	}
 
 	var target T
@@ -119,7 +128,7 @@ func (c *Client) Delete(ctx context.Context, endpoint string) error {
 		if res.StatusCode == http.StatusNotFound {
 			return ErrNotFound
 		}
-		return fmt.Errorf("error response from Webex API: %s", res.Body)
+		return apiError(res)
 	}
 
 	return nil

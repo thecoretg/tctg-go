@@ -2,6 +2,7 @@ package addigy
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -10,6 +11,8 @@ import (
 	"testing"
 
 	"github.com/joho/godotenv"
+
+	"github.com/thecoretg/tctg-go/ratelimit"
 )
 
 // TestClientSendsAPIKey verifies that a client built by NewClient injects the
@@ -59,6 +62,9 @@ func TestClientNeverRetries429(t *testing.T) {
 	_, err = c.Get[struct{}](context.Background(), srv.URL, nil)
 	if err == nil || !strings.Contains(err.Error(), "24 hours") {
 		t.Errorf("error = %v, want the 24-hour lockout warning", err)
+	}
+	if !errors.Is(err, ratelimit.ErrRateLimited) {
+		t.Errorf("error = %v, want ErrRateLimited", err)
 	}
 	if got := hits.Load(); got != 1 {
 		t.Errorf("requests = %d, want 1", got)

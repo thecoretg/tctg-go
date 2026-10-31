@@ -5,8 +5,14 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"sync/atomic"
 	"testing"
+	"time"
+
+	"golang.org/x/time/rate"
+
+	"github.com/thecoretg/tctg-go/ratelimit"
 )
 
 // statusSequence serves the given statuses in order, then 200 for every later
@@ -97,9 +103,45 @@ func TestLimiterErrorStopsRequest(t *testing.T) {
 	client := NewClient(nil, nil, Policy{Limiter: &countingLimiter{err: wantErr}})
 
 	_, err := Do(context.Background(), client, http.MethodPost, srv.URL, nil, map[string]string{"a": "b"})
-	if !errors.Is(err, wantErr) {
-		t.Errorf("Do() error = %v, want %v", err, wantErr)
+	if !errors.Is(err, ratelimit.ErrRateLimited) || !strings.Contains(err.Error(), wantErr.Error()) {
+		t.Errorf("Do() error = %v, want ErrRateLimited carrying %q", err, wantErr)
 	}
+	if got := hits.Load(); got != 0 {
+		t.Errorf("requests = %d, want 0", got)
+	}
+}
+
+func TestRateLimitErrorReadsRetryAfter(t *testing.T) {
+	res := &Response{StatusCode: 429, Body: []byte("slow down"), Header: http.Header{"Retry-After": {"30"}}}
+	e := RateLimitError("huntress", res)
+	if e.Service != "huntress" || e.StatusCode != 429 || e.RetryAfter != 30*time.Second || e.Message != "slow down" {
+		t.Errorf("RateLimitError() = %+v", e)
+	}
+}
+
+// TestLimiterDeadlineIsRateLimited pins that a limiter refusing because the
+// wait would outlast the deadline surfaces as ErrRateLimited, while a
+// cancelled context stays a context error.
+func TestLimiterDeadlineIsRateLimited(t *testing.T) {
+	srv, hits := statusSequence(t)
+	lim := rate.NewLimiter(rate.Every(time.Hour), 1)
+	lim.Allow() // spend the only token, so the next one is an hour away
+	client := NewClient(nil, nil, Policy{Limiter: lim})
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+	_, err := Do(ctx, client, http.MethodGet, srv.URL, nil, nil)
+	if !errors.Is(err, ratelimit.ErrRateLimited) {
+		t.Errorf("deadline: error = %v, want ErrRateLimited", err)
+	}
+
+	ctx, cancel = context.WithCancel(context.Background())
+	cancel()
+	_, err = Do(ctx, client, http.MethodGet, srv.URL, nil, nil)
+	if !errors.Is(err, context.Canceled) || errors.Is(err, ratelimit.ErrRateLimited) {
+		t.Errorf("cancelled: error = %v, want context.Canceled only", err)
+	}
+
 	if got := hits.Load(); got != 0 {
 		t.Errorf("requests = %d, want 0", got)
 	}

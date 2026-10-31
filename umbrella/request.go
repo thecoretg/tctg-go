@@ -15,6 +15,9 @@ var ErrNotFound = errors.New("404 status returned")
 // apiError formats an error response from the Umbrella API, decoding the
 // standard {message} body when present for a clearer message.
 func apiError(res *httpx.Response) error {
+	if res.StatusCode == http.StatusTooManyRequests {
+		return httpx.RateLimitError("umbrella", res)
+	}
 	var er ErrorResponse
 	if err := json.Unmarshal(res.Body, &er); err == nil && er.Message != "" {
 		return fmt.Errorf("error response from Umbrella API: %s [%d]", er.Message, res.StatusCode)

@@ -16,7 +16,9 @@ var ErrNotFound = errors.New("404 status returned")
 // ErrorResponse body when present for a clearer message.
 func apiError(res *httpx.Response) error {
 	if res.StatusCode == http.StatusTooManyRequests {
-		return fmt.Errorf("addigy rate limit exceeded (1000 requests per 10s); the API key may now be blocked for 24 hours, do not retry: %s [429]", res.Body)
+		e := httpx.RateLimitError("addigy", res)
+		e.Message = "the API key may now be blocked for 24 hours, do not retry: " + e.Message
+		return e
 	}
 	var er ErrorResponse
 	if err := json.Unmarshal(res.Body, &er); err == nil && er.Message != "" {

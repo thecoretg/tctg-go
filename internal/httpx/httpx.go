@@ -91,7 +91,12 @@ func (t *RetryTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 				if req.Body != nil {
 					req.Body.Close()
 				}
-				return nil, lerr
+				if req.Context().Err() != nil {
+					return nil, lerr
+				}
+				// The context is still live, so the limiter refused because
+				// the wait for quota would outlast its deadline.
+				return nil, &ratelimit.Error{Message: lerr.Error()}
 			}
 		}
 		resp, err = t.base().RoundTrip(req)
@@ -99,7 +104,10 @@ func (t *RetryTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 			return resp, err
 		}
 
-		wait := retryAfter(resp)
+		var wait time.Duration
+		if resp != nil {
+			wait = retryAfter(resp.Header)
+		}
 		if wait <= 0 {
 			wait = backoff(attempt)
 		}
@@ -154,11 +162,19 @@ func NoRetryOn429(resp *http.Response, err error) bool {
 	return DefaultCheckRetry(resp, err)
 }
 
-func retryAfter(resp *http.Response) time.Duration {
-	if resp == nil {
-		return 0
+// RateLimitError builds the error for a response the vendor refused for rate
+// limiting, keeping its body and any Retry-After it sent.
+func RateLimitError(service string, res *Response) *ratelimit.Error {
+	return &ratelimit.Error{
+		Service:    service,
+		StatusCode: res.StatusCode,
+		RetryAfter: retryAfter(res.Header),
+		Message:    string(res.Body),
 	}
-	v := resp.Header.Get("Retry-After")
+}
+
+func retryAfter(h http.Header) time.Duration {
+	v := h.Get("Retry-After")
 	if v == "" {
 		return 0
 	}

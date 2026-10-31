@@ -15,6 +15,9 @@ var ErrNotFound = errors.New("404 status returned")
 // apiError formats an error response from the Huntress API, decoding the
 // standard {message} body when present for a clearer message.
 func apiError(res *httpx.Response) error {
+	if res.StatusCode == http.StatusTooManyRequests {
+		return httpx.RateLimitError("huntress", res)
+	}
 	var er ErrorResponse
 	if err := json.Unmarshal(res.Body, &er); err == nil && er.Message != "" {
 		return fmt.Errorf("error response from Huntress API: %s [%d]", er.Message, res.StatusCode)

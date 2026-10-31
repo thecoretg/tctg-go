@@ -22,8 +22,9 @@ var (
 	ErrForbidden = errors.New("403 status returned")
 )
 
-// checkStatus turns an error response into an error, mapping 404 to ErrNotFound and 403 to
-// ErrForbidden so callers can match them with errors.Is whatever the method. A 403 keeps the
+// checkStatus turns an error response into an error, mapping 404 to ErrNotFound, 403 to
+// ErrForbidden and 429 to a *ratelimit.Error so callers can match them with errors.Is whatever
+// the method. A 403 keeps the
 // response body, which says why ConnectWise refused.
 func checkStatus(res *httpx.Response) error {
 	switch {
@@ -31,6 +32,8 @@ func checkStatus(res *httpx.Response) error {
 		return nil
 	case res.StatusCode == http.StatusNotFound:
 		return ErrNotFound
+	case res.StatusCode == http.StatusTooManyRequests:
+		return httpx.RateLimitError("connectwise psa", res)
 	case res.StatusCode == http.StatusForbidden:
 		return fmt.Errorf("error response from ConnectWise API: %w: %s", ErrForbidden, res.Body)
 	default:

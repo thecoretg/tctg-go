@@ -30,13 +30,16 @@ func (c *Client) send(ctx context.Context, method, endpoint string, params map[s
 }
 
 // checkStatus turns an error response into an error, mapping 404 to ErrNotFound
-// so callers can match it with errors.Is regardless of the method used.
+// and 429 to a *ratelimit.Error so callers can match them with errors.Is
+// regardless of the method used.
 func checkStatus(res *httpx.Response) error {
 	switch {
 	case res.StatusCode < 400:
 		return nil
 	case res.StatusCode == http.StatusNotFound:
 		return ErrNotFound
+	case res.StatusCode == http.StatusTooManyRequests:
+		return httpx.RateLimitError("connectwise automate", res)
 	default:
 		return fmt.Errorf("error response from ConnectWise Automate API: %s [%d]", res.Body, res.StatusCode)
 	}
