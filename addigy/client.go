@@ -15,7 +15,10 @@ import (
 	"os"
 	"strings"
 
+	"golang.org/x/time/rate"
+
 	"github.com/thecoretg/tctg-go/internal/httpx"
+	"github.com/thecoretg/tctg-go/ratelimit"
 )
 
 // baseURL is the Addigy API v2 root. The Swagger spec declares only the
@@ -29,6 +32,9 @@ type Config struct {
 	// (/o/{organization_id}/...). It is optional for clients that only call
 	// non-org-scoped endpoints.
 	OrgID string
+	// Limiter paces requests. nil uses DefaultLimiter(); ratelimit.None turns
+	// pacing off. Share one limiter between clients on the same API key.
+	Limiter ratelimit.Limiter
 }
 
 type Client struct {
@@ -54,13 +60,26 @@ func NewClient(_ context.Context, cfg Config) (*Client, error) {
 		"Accept":       "application/json",
 	}
 
+	lim := cfg.Limiter
+	if lim == nil {
+		lim = DefaultLimiter()
+	}
+
 	// Addigy allows 1000 requests per 10 seconds and blocks the API key for 24
 	// hours once that is exceeded, so a 429 is never retried: by the time one
 	// arrives the block has likely begun, and another request only extends it.
 	return &Client{
-		httpClient: httpx.NewClient(nil, headers, httpx.Policy{Retries: 3, CheckRetry: httpx.NoRetryOn429}),
+		httpClient: httpx.NewClient(nil, headers, httpx.Policy{Retries: 3, CheckRetry: httpx.NoRetryOn429, Limiter: lim}),
 		orgID:      cfg.OrgID,
 	}, nil
+}
+
+// DefaultLimiter paces a client to 50 requests per second with bursts of 50: at
+// most 550 in any 10 seconds, about half of Addigy's 1000. The margin is wide
+// because exceeding the limit blocks the API key for 24 hours. Each call
+// returns a new limiter.
+func DefaultLimiter() *rate.Limiter {
+	return rate.NewLimiter(50, 50)
 }
 
 func NewClientFromEnv(ctx context.Context) (*Client, error) {

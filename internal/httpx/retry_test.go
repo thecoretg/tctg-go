@@ -2,6 +2,7 @@ package httpx
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"sync/atomic"
@@ -55,5 +56,51 @@ func TestRetryPolicy(t *testing.T) {
 				t.Errorf("requests = %d, want %d", got, tt.wantHits)
 			}
 		})
+	}
+}
+
+// countingLimiter records each Wait and fails once err is set.
+type countingLimiter struct {
+	waits atomic.Int32
+	err   error
+}
+
+func (l *countingLimiter) Wait(context.Context) error {
+	l.waits.Add(1)
+	return l.err
+}
+
+// TestLimiterWaitsBeforeEveryAttempt pins that a retry spends quota like any
+// other request: one 429 then a 200 is two sends, so two waits.
+func TestLimiterWaitsBeforeEveryAttempt(t *testing.T) {
+	srv, hits := statusSequence(t, http.StatusTooManyRequests)
+	lim := &countingLimiter{}
+	client := NewClient(nil, nil, Policy{Retries: 1, Limiter: lim})
+
+	res, err := Do(context.Background(), client, http.MethodGet, srv.URL, nil, nil)
+	if err != nil {
+		t.Fatalf("Do() error = %v", err)
+	}
+	if res.StatusCode != http.StatusOK {
+		t.Errorf("status = %d, want 200", res.StatusCode)
+	}
+	if got, want := lim.waits.Load(), hits.Load(); got != want || got != 2 {
+		t.Errorf("waits = %d, requests = %d, want 2 of each", got, want)
+	}
+}
+
+// TestLimiterErrorStopsRequest pins that a limiter refusing to wait (its
+// context ended, or the wait would outlast the deadline) sends nothing.
+func TestLimiterErrorStopsRequest(t *testing.T) {
+	srv, hits := statusSequence(t)
+	wantErr := errors.New("would exceed deadline")
+	client := NewClient(nil, nil, Policy{Limiter: &countingLimiter{err: wantErr}})
+
+	_, err := Do(context.Background(), client, http.MethodPost, srv.URL, nil, map[string]string{"a": "b"})
+	if !errors.Is(err, wantErr) {
+		t.Errorf("Do() error = %v, want %v", err, wantErr)
+	}
+	if got := hits.Load(); got != 0 {
+		t.Errorf("requests = %d, want 0", got)
 	}
 }

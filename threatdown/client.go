@@ -6,12 +6,15 @@ import (
 	"os"
 	"strings"
 
+	"golang.org/x/time/rate"
+
 	"net/http"
 
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/clientcredentials"
 
 	"github.com/thecoretg/tctg-go/internal/httpx"
+	"github.com/thecoretg/tctg-go/ratelimit"
 )
 
 const (
@@ -23,6 +26,9 @@ const (
 type Config struct {
 	ClientID     string
 	ClientSecret string
+	// Limiter paces requests. nil uses DefaultLimiter(); ratelimit.None turns
+	// pacing off. Share one limiter between clients on the same OAuth application.
+	Limiter ratelimit.Limiter
 }
 
 type Client struct {
@@ -48,10 +54,24 @@ func NewClient(ctx context.Context, cfg Config) (*Client, error) {
 		Scopes:       []string{"read", "write"},
 	}).TokenSource(ctx)
 
+	lim := cfg.Limiter
+	if lim == nil {
+		lim = DefaultLimiter()
+	}
+
 	oauthClient := oauth2.NewClient(ctx, ts)
-	hc := httpx.NewClient(oauthClient.Transport, map[string]string{"Accept": "application/json"}, httpx.Policy{Retries: 3})
+	hc := httpx.NewClient(oauthClient.Transport, map[string]string{"Accept": "application/json"}, httpx.Policy{Retries: 3, Limiter: lim})
 
 	return &Client{httpClient: hc}, nil
+}
+
+// DefaultLimiter paces a client to ThreatDown's 360 requests per minute, a
+// leaky bucket counted per OAuth application: 6 per second sustained, with
+// bursts of 6 since the bucket's depth is not published. ThreatDown raises the
+// limit on request; pass a limiter with the new rate when it does. Each call
+// returns a new limiter.
+func DefaultLimiter() *rate.Limiter {
+	return rate.NewLimiter(6, 6)
 }
 
 func NewClientFromEnv(ctx context.Context) (*Client, error) {

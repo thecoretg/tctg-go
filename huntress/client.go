@@ -12,8 +12,12 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
+
+	"golang.org/x/time/rate"
 
 	"github.com/thecoretg/tctg-go/internal/httpx"
+	"github.com/thecoretg/tctg-go/ratelimit"
 )
 
 const baseURL = "https://api.huntress.io/v1"
@@ -21,6 +25,9 @@ const baseURL = "https://api.huntress.io/v1"
 type Config struct {
 	APIKey    string
 	APISecret string
+	// Limiter paces requests. nil uses DefaultLimiter(); ratelimit.None turns
+	// pacing off. Share one limiter between clients on the same account.
+	Limiter ratelimit.Limiter
 }
 
 type Client struct {
@@ -48,7 +55,20 @@ func NewClient(_ context.Context, cfg Config) (*Client, error) {
 		"Accept":        "application/json",
 	}
 
-	return &Client{httpClient: httpx.NewClient(nil, headers, httpx.Policy{Retries: 3})}, nil
+	lim := cfg.Limiter
+	if lim == nil {
+		lim = DefaultLimiter()
+	}
+
+	return &Client{httpClient: httpx.NewClient(nil, headers, httpx.Policy{Retries: 3, Limiter: lim})}, nil
+}
+
+// DefaultLimiter paces a client to Huntress's limit of 60 requests per minute,
+// a sliding window counted per account. One request every 60/59 seconds with
+// no burst keeps any 60-second span at 60 requests or fewer. Each call returns
+// a new limiter.
+func DefaultLimiter() *rate.Limiter {
+	return rate.NewLimiter(rate.Every(time.Minute/59), 1)
 }
 
 func NewClientFromEnv(ctx context.Context) (*Client, error) {

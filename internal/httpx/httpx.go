@@ -14,6 +14,8 @@ import (
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/thecoretg/tctg-go/ratelimit"
 )
 
 const (
@@ -21,8 +23,11 @@ const (
 	backoffMax  = 2 * time.Second
 )
 
-// Policy controls how a client retries failed requests.
+// Policy controls how a client paces and retries requests.
 type Policy struct {
+	// Limiter, when set, is waited on before every attempt, retries included,
+	// so a retry spends quota like any other request.
+	Limiter ratelimit.Limiter
 	// Retries is how many times a failed request is retried after its first
 	// attempt.
 	Retries int
@@ -42,7 +47,8 @@ func NewClient(base http.RoundTripper, headers map[string]string, p Policy) *htt
 }
 
 // RetryTransport wraps a base RoundTripper. It sets any configured Headers that
-// the request does not already carry, then retries failures that CheckRetry
+// the request does not already carry, waits on Limiter before each attempt,
+// then retries failures that CheckRetry
 // accepts up to Retries times using exponential backoff with jitter. It honors
 // a Retry-After header when present and aborts as soon as the request context
 // is cancelled.
@@ -79,6 +85,15 @@ func (t *RetryTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 		check = DefaultCheckRetry
 	}
 	for attempt := 0; ; attempt++ {
+		if t.Limiter != nil {
+			if lerr := t.Limiter.Wait(req.Context()); lerr != nil {
+				// A RoundTripper must close the body even when it never sends it.
+				if req.Body != nil {
+					req.Body.Close()
+				}
+				return nil, lerr
+			}
+		}
 		resp, err = t.base().RoundTrip(req)
 		if attempt >= t.Retries || !check(resp, err) {
 			return resp, err

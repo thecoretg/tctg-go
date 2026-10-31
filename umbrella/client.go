@@ -10,11 +10,15 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
+
+	"golang.org/x/time/rate"
 
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/clientcredentials"
 
 	"github.com/thecoretg/tctg-go/internal/httpx"
+	"github.com/thecoretg/tctg-go/ratelimit"
 )
 
 const (
@@ -29,6 +33,9 @@ const (
 type Config struct {
 	ClientID     string
 	ClientSecret string
+	// Limiter paces requests. nil uses DefaultLimiter(); ratelimit.None turns
+	// pacing off. Share one limiter between clients on the same API key.
+	Limiter ratelimit.Limiter
 }
 
 type Client struct {
@@ -56,10 +63,25 @@ func NewClient(ctx context.Context, cfg Config) (*Client, error) {
 		TokenURL:     tokenURL,
 	}).TokenSource(ctx)
 
+	lim := cfg.Limiter
+	if lim == nil {
+		lim = DefaultLimiter()
+	}
+
 	oauthClient := oauth2.NewClient(ctx, ts)
-	hc := httpx.NewClient(oauthClient.Transport, map[string]string{"Accept": "application/json"}, httpx.Policy{Retries: 3})
+	hc := httpx.NewClient(oauthClient.Transport, map[string]string{"Accept": "application/json"}, httpx.Policy{Retries: 3, Limiter: lim})
 
 	return &Client{httpClient: hc}, nil
+}
+
+// DefaultLimiter paces a client to Umbrella's three per-key limits, which are
+// enforced together: 5 per second, 14 per minute and 350 per 30 minutes. One
+// token every 30m/348 with bursts of 2 satisfies all three at once: at most 2
+// in a second, 13.6 in a minute and 350 in 30 minutes. That is a steady
+// request every ~5.2s, the 30-minute window's sustained rate. Each call returns
+// a new limiter.
+func DefaultLimiter() *rate.Limiter {
+	return rate.NewLimiter(rate.Every(30*time.Minute/348), 2)
 }
 
 func NewClientFromEnv(ctx context.Context) (*Client, error) {
