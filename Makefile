@@ -1,13 +1,10 @@
-.PHONY: test test-td test-rewst test-sf test-entra
+.PHONY: test test-td test-sf test-entra
 
 test:
 	go test -v ./...
 
 test-td:
 	go test -v ./threatdown/...
-
-test-rewst:
-	go test -v ./rewst/...
 
 test-sf:
 	go test -v ./salesforce/...
