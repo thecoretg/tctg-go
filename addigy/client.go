@@ -97,8 +97,18 @@ func (c *Client) url(path string) string {
 // orgURL builds a URL for an org-scoped endpoint (/o/{organization_id}/...). It
 // errors if the client was created without an OrgID.
 func (c *Client) orgURL(path string) (string, error) {
+	p, err := c.orgPath(path)
+	if err != nil {
+		return "", err
+	}
+	return c.url(p), nil
+}
+
+// orgPath prefixes path with the org scope (o/{organization_id}/). It errors if
+// the client was created without an OrgID.
+func (c *Client) orgPath(path string) (string, error) {
 	if c.orgID == "" {
 		return "", fmt.Errorf("addigy: OrgID is required for org-scoped endpoints")
 	}
-	return fmt.Sprintf("%s/o/%s/%s", baseURL, c.orgID, path), nil
+	return fmt.Sprintf("o/%s/%s", c.orgID, path), nil
 }

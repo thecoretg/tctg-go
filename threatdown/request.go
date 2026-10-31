@@ -2,10 +2,12 @@ package threatdown
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"maps"
 	"net/http"
+	"strings"
 
 	"github.com/thecoretg/tctg-go/internal/httpx"
 )
@@ -81,32 +83,89 @@ func (c *Client) Put[T any](ctx context.Context, url string, body any) (*T, erro
 	return &target, nil
 }
 
-// getAll fetches all pages of a cursor-paginated endpoint. The extract function
-// returns the items and the next cursor from each response. If the endpoint does
-// not paginate, extract should return an empty string for the cursor and getAll
-// will return after the single request.
-func (c *Client) getAll[T, R any](ctx context.Context, url string, params map[string]string, extract func(R) ([]T, string)) ([]T, error) {
-	var all []T
-	cursor := ""
-	for {
-		p := make(map[string]string, len(params)+1)
-		maps.Copy(p, params)
+// ListAll fetches every page of a cursor-paginated ThreatDown GET endpoint and
+// decodes its items into T. Pass json.RawMessage to keep each item exactly as
+// the API returned it. path is relative to the OneView root and includes the
+// API version, e.g. "v1/users". ThreatDown names a list's item array after the
+// resource, so the items are read from the key matching path's last segment;
+// a response without that key is an error. params are sent with every page,
+// and the next_cursor of each response is sent back as the cursor param.
+func (c *Client) ListAll[T any](ctx context.Context, path string, params map[string]string) ([]T, error) {
+	all, err := collectCursor[T](path, func(cursor string) (map[string]json.RawMessage, error) {
+		p := maps.Clone(params)
+		if p == nil {
+			p = make(map[string]string, 1)
+		}
 		if cursor != "" {
 			p["cursor"] = cursor
 		}
-
-		result, err := c.Get[R](ctx, url, p)
+		page, err := c.Get[map[string]json.RawMessage](ctx, oneViewURL(path), p)
 		if err != nil {
 			return nil, err
 		}
+		return *page, nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("list all %s: %w", path, err)
+	}
+	return all, nil
+}
 
-		items, nextCursor := extract(*result)
+// SearchAll is ListAll for ThreatDown's POST search endpoints, such as
+// "v1/accounts/{account_id}/endpoints": body is sent with every page, with the
+// previous response's next_cursor added to it.
+func (c *Client) SearchAll[T any](ctx context.Context, path string, body map[string]any) ([]T, error) {
+	all, err := collectCursor[T](path, func(cursor string) (map[string]json.RawMessage, error) {
+		b := maps.Clone(body)
+		if b == nil {
+			b = make(map[string]any, 1)
+		}
+		if cursor != "" {
+			b["next_cursor"] = cursor
+		}
+		page, err := c.Post[map[string]json.RawMessage](ctx, oneViewURL(path), b)
+		if err != nil {
+			return nil, err
+		}
+		return *page, nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("search all %s: %w", path, err)
+	}
+	return all, nil
+}
+
+// collectCursor requests pages from fetch until a response has no
+// next_cursor, decoding each page's items from the key named by path's last
+// segment.
+func collectCursor[T any](path string, fetch func(cursor string) (map[string]json.RawMessage, error)) ([]T, error) {
+	key := path[strings.LastIndex(path, "/")+1:]
+	var all []T
+	cursor := ""
+	for {
+		page, err := fetch(cursor)
+		if err != nil {
+			return nil, err
+		}
+		raw, ok := page[key]
+		if !ok {
+			return nil, fmt.Errorf("response has no %q array", key)
+		}
+		var items []T
+		if err := json.Unmarshal(raw, &items); err != nil {
+			return nil, fmt.Errorf("decoding %q: %w", key, err)
+		}
 		all = append(all, items...)
 
-		if nextCursor == "" {
+		cursor = ""
+		if raw, ok := page["next_cursor"]; ok {
+			if err := json.Unmarshal(raw, &cursor); err != nil {
+				return nil, fmt.Errorf("decoding next_cursor: %w", err)
+			}
+		}
+		if cursor == "" {
 			return all, nil
 		}
-		cursor = nextCursor
 	}
 }
 

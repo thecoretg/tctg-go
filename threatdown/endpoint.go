@@ -3,13 +3,7 @@ package threatdown
 import (
 	"context"
 	"fmt"
-	"maps"
 )
-
-type endpointSearchResp struct {
-	Endpoints  []Endpoint `json:"endpoints"`
-	NextCursor string     `json:"next_cursor"`
-}
 
 type Endpoint struct {
 	Link             string `json:"link"`
@@ -65,26 +59,12 @@ type Endpoint struct {
 	MachineVersion int `json:"machineVersion"`
 }
 
+// SearchEndpoints returns every endpoint in the account whose nebula
+// account ID is given, filtered by query.
 func (c *Client) SearchEndpoints(ctx context.Context, nebulaAccountID string, query map[string]string) ([]Endpoint, error) {
-	url := endpointURLV1(fmt.Sprintf("accounts/%s/endpoints", nebulaAccountID))
-	var all []Endpoint
-	cursor := ""
-	for {
-		body := make(map[string]string, len(query)+1)
-		maps.Copy(body, query)
-		if cursor != "" {
-			body["next_cursor"] = cursor
-		}
-
-		result, err := c.Post[endpointSearchResp](ctx, url, body)
-		if err != nil {
-			return nil, fmt.Errorf("search endpoints: %w", err)
-		}
-
-		all = append(all, result.Endpoints...)
-		if result.NextCursor == "" {
-			return all, nil
-		}
-		cursor = result.NextCursor
+	body := make(map[string]any, len(query))
+	for k, v := range query {
+		body[k] = v
 	}
+	return c.SearchAll[Endpoint](ctx, fmt.Sprintf("v1/accounts/%s/endpoints", nebulaAccountID), body)
 }

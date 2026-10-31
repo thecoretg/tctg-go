@@ -18,9 +18,11 @@ import (
 )
 
 const (
-	tokenURL  = "https://api.threatdown.com/oneview/oauth2/token"
-	baseURLV1 = "https://api.threatdown.com/oneview/v1"
-	baseURLV2 = "https://api.threatdown.com/oneview/v2"
+	tokenURL = "https://api.threatdown.com/oneview/oauth2/token"
+	// oneViewRoot is the root of the versioned OneView APIs.
+	oneViewRoot = "https://api.threatdown.com/oneview"
+	baseURLV1   = oneViewRoot + "/v1"
+	baseURLV2   = oneViewRoot + "/v2"
 )
 
 type Config struct {
@@ -79,6 +81,12 @@ func NewClientFromEnv(ctx context.Context) (*Client, error) {
 		ClientID:     os.Getenv("THREATDOWN_CLIENT_ID"),
 		ClientSecret: os.Getenv("THREATDOWN_CLIENT_SECRET"),
 	})
+}
+
+// oneViewURL builds a URL from a path relative to the OneView root, such as
+// "v1/users".
+func oneViewURL(path string) string {
+	return fmt.Sprintf("%s/%s", oneViewRoot, path)
 }
 
 func endpointURLV1(endpoint string) string {

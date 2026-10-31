@@ -1,9 +1,6 @@
 package threatdown
 
-import (
-	"context"
-	"fmt"
-)
+import "context"
 
 type User struct {
 	ID        string `json:"id"`
@@ -12,17 +9,7 @@ type User struct {
 	LastName  string `json:"lastname"`
 }
 
-type usersResp struct {
-	Users      []User `json:"users"`
-	NextCursor string `json:"next_cursor"`
-}
-
+// ListUsers returns every OneView user.
 func (c *Client) ListUsers(ctx context.Context) ([]User, error) {
-	users, err := c.getAll(ctx, endpointURLV1("users"), map[string]string{"page_size": "1000"}, func(r usersResp) ([]User, string) {
-		return r.Users, r.NextCursor
-	})
-	if err != nil {
-		return nil, fmt.Errorf("list users: %w", err)
-	}
-	return users, nil
+	return c.ListAll[User](ctx, "v1/users", map[string]string{"page_size": "1000"})
 }

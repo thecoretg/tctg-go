@@ -22,12 +22,14 @@ import (
 )
 
 const (
-	tokenURL = "https://api.umbrella.com/auth/v2/token"
-	baseURL  = "https://api.umbrella.com/admin/v2"
+	// apiHost is the root every Umbrella API path hangs off.
+	apiHost  = "https://api.umbrella.com"
+	tokenURL = apiHost + "/auth/v2/token"
+	baseURL  = apiHost + "/admin/v2"
 	// deploymentsBaseURL is the base for the deployments APIs (policies,
 	// roaming computers), which live under a different path than the
 	// providers/admin endpoints.
-	deploymentsBaseURL = "https://api.umbrella.com/deployments/v2"
+	deploymentsBaseURL = apiHost + "/deployments/v2"
 )
 
 type Config struct {
@@ -89,6 +91,12 @@ func NewClientFromEnv(ctx context.Context) (*Client, error) {
 		ClientID:     os.Getenv("UMBRELLA_CLIENT_ID"),
 		ClientSecret: os.Getenv("UMBRELLA_CLIENT_SECRET"),
 	})
+}
+
+// hostURL builds a URL from a path relative to the API host, such as
+// "admin/v2/providers/customers".
+func hostURL(path string) string {
+	return fmt.Sprintf("%s/%s", apiHost, path)
 }
 
 func endpointURL(path string) string {

@@ -27,12 +27,15 @@ func totalCount(h http.Header) int {
 	return n
 }
 
-// listAll fetches every page of a list endpoint, advancing Automate's page /
-// pagesize query params and using the Total-Count response header to know when
-// to stop. It stops on a short page even when Total-Count is absent. The
-// supplied params are not modified; a caller-provided pagesize/page is honored
-// (page sets the starting page).
-func (c *Client) listAll[T any](ctx context.Context, endpoint string, params map[string]string) ([]T, error) {
+// ListAll fetches every page of a list endpoint and decodes its items into T.
+// Pass json.RawMessage to keep each item exactly as the API returned it.
+// endpoint is relative to the server root, e.g. "cwa/api/v1/Computers". It
+// advances Automate's page / pagesize query params and uses the Total-Count
+// response header to know when to stop, stopping on a short page even when
+// Total-Count is absent. The supplied params are not modified; a
+// caller-provided pagesize/page is honored (page sets the starting page), and
+// pagesize defaults to 1000.
+func (c *Client) ListAll[T any](ctx context.Context, endpoint string, params map[string]string) ([]T, error) {
 	p := maps.Clone(params)
 	if p == nil {
 		p = map[string]string{}
@@ -73,7 +76,7 @@ func (c *Client) listAll[T any](ctx context.Context, endpoint string, params map
 
 // ListAllCompanies returns every company across all pages (see ListCompanies).
 func (c *Client) ListAllCompanies(ctx context.Context, params map[string]string) ([]Company, error) {
-	result, err := c.listAll[Company](ctx, "cwa/api/v1/Clients", params)
+	result, err := c.ListAll[Company](ctx, "cwa/api/v1/Clients", params)
 	if err != nil {
 		return nil, fmt.Errorf("list all companies: %w", err)
 	}
@@ -82,7 +85,7 @@ func (c *Client) ListAllCompanies(ctx context.Context, params map[string]string)
 
 // ListAllLocations returns every location across all pages (see ListLocations).
 func (c *Client) ListAllLocations(ctx context.Context, params map[string]string) ([]Location, error) {
-	result, err := c.listAll[Location](ctx, "cwa/api/v1/Locations", params)
+	result, err := c.ListAll[Location](ctx, "cwa/api/v1/Locations", params)
 	if err != nil {
 		return nil, fmt.Errorf("list all locations: %w", err)
 	}
@@ -91,7 +94,7 @@ func (c *Client) ListAllLocations(ctx context.Context, params map[string]string)
 
 // ListAllComputers returns every computer across all pages (see ListComputers).
 func (c *Client) ListAllComputers(ctx context.Context, params map[string]string) ([]Computer, error) {
-	result, err := c.listAll[Computer](ctx, "cwa/api/v1/Computers", params)
+	result, err := c.ListAll[Computer](ctx, "cwa/api/v1/Computers", params)
 	if err != nil {
 		return nil, fmt.Errorf("list all computers: %w", err)
 	}
@@ -101,7 +104,7 @@ func (c *Client) ListAllComputers(ctx context.Context, params map[string]string)
 // ListAllComputerDrives returns every computer drive across all pages (see
 // ListComputerDrives).
 func (c *Client) ListAllComputerDrives(ctx context.Context, params map[string]string) ([]ComputerDrive, error) {
-	result, err := c.listAll[ComputerDrive](ctx, "cwa/api/v1/Computers/Drives", params)
+	result, err := c.ListAll[ComputerDrive](ctx, "cwa/api/v1/Computers/Drives", params)
 	if err != nil {
 		return nil, fmt.Errorf("list all computer drives: %w", err)
 	}
