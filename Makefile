@@ -1,4 +1,4 @@
-.PHONY: test test-td test-sf test-entra
+.PHONY: test test-td test-sf test-entra test-pp
 
 test:
 	go test -v ./...
@@ -12,3 +12,5 @@ test-sf:
 test-entra:
 	go test -v ./entra/...
 
+test-pp:
+	go test -v ./proofpoint/...
