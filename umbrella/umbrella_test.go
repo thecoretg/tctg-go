@@ -6,10 +6,14 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"slices"
 	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/joho/godotenv"
+	"golang.org/x/oauth2/clientcredentials"
+	"golang.org/x/time/rate"
 
 	"github.com/thecoretg/tctg-go/internal/httpx"
 )
@@ -148,4 +152,94 @@ func TestListAllCustomersIntegration(t *testing.T) {
 		t.Fatalf("ListAllCustomers: %v", err)
 	}
 	t.Logf("fetched %d customer(s) across all pages", len(all))
+}
+
+// TestForOrgScopesRequestsToTheChild checks a ForOrg client uses a token issued for its
+// child org (the token request carries X-Umbrella-OrgId), reuses it, shares the parent's
+// limiter, and leaves the parent on the provider's token.
+func TestForOrgScopesRequestsToTheChild(t *testing.T) {
+	var tokenOrgs []string
+	var used []string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		if r.URL.Path == "/token" {
+			org := r.Header.Get(orgHeader)
+			tokenOrgs = append(tokenOrgs, org)
+			_, _ = fmt.Fprintf(w, `{"access_token":"tok-%s","token_type":"bearer","expires_in":3600}`, org)
+			return
+		}
+		used = append(used, strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer "))
+		_, _ = w.Write([]byte(`{"organizationId":"8675309","fingerprint":"abc123","userId":"42","region":"us"}`))
+	}))
+	defer srv.Close()
+
+	creds := &clientcredentials.Config{ClientID: "id", ClientSecret: "secret", TokenURL: srv.URL + "/token"}
+	parent := newClient(context.Background(), creds, httpx.Policy{Limiter: rate.NewLimiter(rate.Inf, 1)})
+	child := parent.ForOrg(8675309)
+
+	info, err := child.Get[OrgInfo](context.Background(), srv.URL+"/orgInfo", nil)
+	if err != nil {
+		t.Fatalf("child get: %v", err)
+	}
+	if info.OrganizationID != "8675309" || info.Fingerprint != "abc123" || info.UserID != "42" {
+		t.Errorf("decoded %+v", *info)
+	}
+	if again := parent.ForOrg(8675309); again != child {
+		t.Error("ForOrg built a second client for the same customer; its token would not be reused")
+	}
+	if _, err := child.Get[OrgInfo](context.Background(), srv.URL+"/orgInfo", nil); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := parent.Get[OrgInfo](context.Background(), srv.URL+"/orgInfo", nil); err != nil {
+		t.Fatalf("parent get: %v", err)
+	}
+	if want := []string{"8675309", ""}; !slices.Equal(tokenOrgs, want) {
+		t.Errorf("token requests for orgs %q, want %q (one per org, the child's first)", tokenOrgs, want)
+	}
+	if want := []string{"tok-8675309", "tok-8675309", "tok-"}; !slices.Equal(used, want) {
+		t.Errorf("tokens used %q, want %q", used, want)
+	}
+	if child.policy.Limiter != parent.policy.Limiter {
+		t.Error("the child has a limiter of its own; it must spend the parent's budget")
+	}
+}
+
+// TestForOrgOrganizationInfoIntegration checks against the live API that a ForOrg client
+// reads each customer's own OrgInfo: each answers with its own organization, whose id is
+// its customerId, and neither is the provider's.
+func TestForOrgOrganizationInfoIntegration(t *testing.T) {
+	c := newTestClient(t)
+	ctx := context.Background()
+	customers, err := c.ListCustomers(ctx, map[string]string{"limit": "2"})
+	if err != nil {
+		t.Fatalf("ListCustomers: %v", err)
+	}
+	if len(customers) < 2 {
+		t.Skip("needs two customers")
+	}
+	provider, err := c.GetOrganizationInfo(ctx)
+	if err != nil {
+		t.Fatalf("provider's own OrgInfo: %v", err)
+	}
+	seen := map[string]int{}
+	for _, cu := range customers[:2] {
+		info, err := c.ForOrg(cu.CustomerID).GetOrganizationInfo(ctx)
+		if err != nil {
+			t.Fatalf("GetOrganizationInfo for customer %d: %v", cu.CustomerID, err)
+		}
+		if info.OrganizationID != strconv.Itoa(cu.CustomerID) {
+			t.Errorf("customer %d: organizationId %q", cu.CustomerID, info.OrganizationID)
+		}
+		if info.Fingerprint == "" || info.UserID == "" {
+			t.Errorf("customer %d: an OrgInfo field is empty", cu.CustomerID)
+		}
+		if info.OrganizationID == provider.OrganizationID {
+			t.Errorf("customer %d answered with the provider's own organization", cu.CustomerID)
+		}
+		if other, dup := seen[info.OrganizationID]; dup {
+			t.Errorf("customers %d and %d answered with the same organization", other, cu.CustomerID)
+		}
+		seen[info.OrganizationID] = cu.CustomerID
+	}
+	t.Logf("2 customers, 2 distinct organizations, neither the provider's")
 }

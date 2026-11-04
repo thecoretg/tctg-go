@@ -32,10 +32,14 @@ type RoamingComputerUpdateRequest struct {
 
 // OrgInfo is the OrgInfo.json properties for deploying the Cisco Secure Client
 // on user devices in the organization.
+//
+// Every field is a string: the live API sends organizationId and userId quoted, though the
+// published spec says integer, and an int field failed to decode every answer.
 type OrgInfo struct {
-	OrganizationID int    `json:"organizationId"`
+	OrganizationID string `json:"organizationId"`
 	Fingerprint    string `json:"fingerprint"`
-	UserID         int    `json:"userId"`
+	UserID         string `json:"userId"`
+	Region         string `json:"region"`
 }
 
 // ListRoamingComputers lists a single page of roaming computers. Supported
@@ -79,7 +83,8 @@ func (c *Client) DeleteRoamingComputer(ctx context.Context, deviceID string) err
 }
 
 // GetOrganizationInfo gets the OrgInfo.json properties for deploying the Cisco
-// Secure Client in the organization.
+// Secure Client in the organization. On a provider's client that is the provider's own
+// org; call it on ForOrg(customerID) for a customer's.
 func (c *Client) GetOrganizationInfo(ctx context.Context) (*OrgInfo, error) {
 	result, err := c.Get[OrgInfo](ctx, deploymentsURL("roamingcomputers/orgInfo"), nil)
 	if err != nil {

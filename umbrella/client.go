@@ -9,7 +9,9 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"golang.org/x/time/rate"
@@ -42,7 +44,20 @@ type Config struct {
 
 type Client struct {
 	httpClient *http.Client
+	// creds, ctx and policy are what httpClient was built from, kept so ForOrg can build
+	// a child client with a token of its own and the same limiter.
+	creds  *clientcredentials.Config
+	ctx    context.Context //nolint:containedctx // the token sources' lifetime, as NewClient's ctx
+	policy httpx.Policy
+
+	mu   sync.Mutex
+	orgs map[int]*Client
 }
+
+// orgHeader names the child org a token is requested for.
+const orgHeader = "X-Umbrella-OrgId"
+
+var acceptJSON = map[string]string{"Accept": "application/json"}
 
 // NewClient builds a Client using the OAuth2 client-credentials flow. The
 // credential is granted the provider scopes it is entitled to, so no scopes
@@ -59,21 +74,66 @@ func NewClient(ctx context.Context, cfg Config) (*Client, error) {
 		return nil, fmt.Errorf("missing umbrella config fields: %s", strings.Join(missing, ", "))
 	}
 
-	ts := (&clientcredentials.Config{
-		ClientID:     cfg.ClientID,
-		ClientSecret: cfg.ClientSecret,
-		TokenURL:     tokenURL,
-	}).TokenSource(ctx)
-
 	lim := cfg.Limiter
 	if lim == nil {
 		lim = DefaultLimiter()
 	}
+	creds := &clientcredentials.Config{
+		ClientID:     cfg.ClientID,
+		ClientSecret: cfg.ClientSecret,
+		TokenURL:     tokenURL,
+	}
+	return newClient(ctx, creds, httpx.Policy{Retries: 3, Limiter: lim}), nil
+}
 
-	oauthClient := oauth2.NewClient(ctx, ts)
-	hc := httpx.NewClient(oauthClient.Transport, map[string]string{"Accept": "application/json"}, httpx.Policy{Retries: 3, Limiter: lim})
+func newClient(ctx context.Context, creds *clientcredentials.Config, policy httpx.Policy) *Client {
+	oauthClient := oauth2.NewClient(ctx, creds.TokenSource(ctx))
+	return &Client{
+		httpClient: httpx.NewClient(oauthClient.Transport, acceptJSON, policy),
+		creds:      creds,
+		ctx:        ctx,
+		policy:     policy,
+		orgs:       map[int]*Client{},
+	}
+}
 
-	return &Client{httpClient: hc}, nil
+// ForOrg returns a client that acts on one of the provider's child orgs, the customer
+// with customerID. It holds a token issued for that org (the token request carries the
+// X-Umbrella-OrgId header), cached and refreshed on its own, and shares this client's
+// limiter, so it spends the same per-key budget. The same customerID returns the same
+// client, so its token is reused.
+//
+// The header on the provider's own token is not enough: the live API ignores it and
+// answers child-scoped calls for the provider's org.
+//
+// Use it for the child-scoped APIs, such as GetOrganizationInfo and the roaming computer
+// calls. The provider endpoints under /admin/v2/providers/customers take the customer in
+// the path and need the provider's client.
+func (c *Client) ForOrg(customerID int) *Client {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if child, ok := c.orgs[customerID]; ok {
+		return child
+	}
+	tokenHTTP := &http.Client{Transport: orgTransport{base: http.DefaultTransport, org: strconv.Itoa(customerID)}}
+	if hc, ok := c.ctx.Value(oauth2.HTTPClient).(*http.Client); ok && hc.Transport != nil {
+		tokenHTTP.Transport = orgTransport{base: hc.Transport, org: strconv.Itoa(customerID)}
+	}
+	child := newClient(context.WithValue(c.ctx, oauth2.HTTPClient, tokenHTTP), c.creds, c.policy)
+	c.orgs[customerID] = child
+	return child
+}
+
+// orgTransport adds the child org's header to the token request.
+type orgTransport struct {
+	base http.RoundTripper
+	org  string
+}
+
+func (t orgTransport) RoundTrip(r *http.Request) (*http.Response, error) {
+	r = r.Clone(r.Context())
+	r.Header.Set(orgHeader, t.org)
+	return t.base.RoundTrip(r)
 }
 
 // DefaultLimiter paces a client to Umbrella's three per-key limits, which are
