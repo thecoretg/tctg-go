@@ -6,6 +6,7 @@ package umbrella
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -82,8 +83,28 @@ func NewClient(ctx context.Context, cfg Config) (*Client, error) {
 		ClientID:     cfg.ClientID,
 		ClientSecret: cfg.ClientSecret,
 		TokenURL:     tokenURL,
+		// Umbrella takes the credential as HTTP Basic. Naming it saves a request: left to
+		// auto-detect, oauth2 answers a refused token request by sending it again with the
+		// credential in the body, outside the limiter.
+		AuthStyle: oauth2.AuthStyleInHeader,
 	}
-	return newClient(ctx, creds, httpx.Policy{Retries: 3, Limiter: lim}), nil
+	return newClient(ctx, creds, httpx.Policy{Retries: 3, Limiter: lim, CheckRetry: checkRetry}), nil
+}
+
+// checkRetry is httpx.DefaultCheckRetry, except that a token request Umbrella answered
+// with a 4xx other than 429 is not retried. The oauth2 transport returns that answer as an
+// error, which the default check retries like a dropped connection; but a refused
+// credential or a child org the key may not act for is refused the same way every time,
+// and each retry waits on the limiter, so it would spend the key's budget for nothing.
+func checkRetry(resp *http.Response, err error) bool {
+	var re *oauth2.RetrieveError
+	if errors.As(err, &re) && re.Response != nil {
+		code := re.Response.StatusCode
+		if code >= 400 && code < 500 && code != http.StatusTooManyRequests {
+			return false
+		}
+	}
+	return httpx.DefaultCheckRetry(resp, err)
 }
 
 func newClient(ctx context.Context, creds *clientcredentials.Config, policy httpx.Policy) *Client {

@@ -2,6 +2,7 @@ package umbrella
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -9,13 +10,16 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"testing"
 
 	"github.com/joho/godotenv"
+	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/clientcredentials"
 	"golang.org/x/time/rate"
 
 	"github.com/thecoretg/tctg-go/internal/httpx"
+	"github.com/thecoretg/tctg-go/ratelimit"
 )
 
 // TestNewClientMissingCreds verifies config validation reports the missing
@@ -242,4 +246,104 @@ func TestForOrgOrganizationInfoIntegration(t *testing.T) {
 		seen[info.OrganizationID] = cu.CustomerID
 	}
 	t.Logf("2 customers, 2 distinct organizations, neither the provider's")
+}
+
+// countingLimiter counts the waits a client makes, one per attempt.
+type countingLimiter struct {
+	ratelimit.Limiter
+	waits atomic.Int32
+}
+
+func (l *countingLimiter) Wait(ctx context.Context) error {
+	l.waits.Add(1)
+	return l.Limiter.Wait(ctx)
+}
+
+// TestRefusedTokenIsNotRetried checks a token request answered with a 4xx other than 429
+// costs one attempt, one limiter wait and one token request, while a 429 or 5xx token
+// answer is still retried.
+func TestRefusedTokenIsNotRetried(t *testing.T) {
+	for _, tc := range []struct {
+		status       int
+		wantRequests int32
+	}{
+		{http.StatusBadRequest, 1},
+		{http.StatusUnauthorized, 1},
+		{http.StatusForbidden, 1},
+		{http.StatusTooManyRequests, 2},
+		{http.StatusServiceUnavailable, 2},
+	} {
+		t.Run(strconv.Itoa(tc.status), func(t *testing.T) {
+			var tokenRequests, apiRequests atomic.Int32
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if r.URL.Path != "/token" {
+					apiRequests.Add(1)
+					return
+				}
+				tokenRequests.Add(1)
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(tc.status)
+				_, _ = w.Write([]byte(`{"error":"invalid_client"}`))
+			}))
+			defer srv.Close()
+
+			lim := &countingLimiter{Limiter: rate.NewLimiter(rate.Inf, 1)}
+			creds := &clientcredentials.Config{ClientID: "id", ClientSecret: "secret", TokenURL: srv.URL + "/token", AuthStyle: oauth2.AuthStyleInHeader}
+			// One retry keeps the retried cases fast; the policy is NewClient's otherwise.
+			parent := newClient(context.Background(), creds, httpx.Policy{Retries: 1, Limiter: lim, CheckRetry: checkRetry})
+			_, err := parent.ForOrg(8675309).Get[OrgInfo](context.Background(), srv.URL+"/orgInfo", nil)
+
+			var re *oauth2.RetrieveError
+			if !errors.As(err, &re) || re.Response.StatusCode != tc.status {
+				t.Fatalf("err = %v, want a %d *oauth2.RetrieveError", err, tc.status)
+			}
+			if got := tokenRequests.Load(); got != tc.wantRequests {
+				t.Errorf("token requests = %d, want %d", got, tc.wantRequests)
+			}
+			if got := lim.waits.Load(); got != tc.wantRequests {
+				t.Errorf("limiter waits = %d, want %d", got, tc.wantRequests)
+			}
+			if apiRequests.Load() != 0 {
+				t.Error("the API was called without a token")
+			}
+		})
+	}
+}
+
+// TestNewClientDoesNotRetryRefusedToken checks NewClient's policy carries checkRetry.
+func TestNewClientDoesNotRetryRefusedToken(t *testing.T) {
+	c, err := NewClient(context.Background(), Config{ClientID: "id", ClientSecret: "secret", Limiter: ratelimit.None})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.creds.AuthStyle != oauth2.AuthStyleInHeader {
+		t.Error("NewClient leaves the auth style to auto-detect, which sends a refused token request twice")
+	}
+	refused := &oauth2.RetrieveError{Response: &http.Response{StatusCode: http.StatusUnauthorized}}
+	if c.policy.CheckRetry == nil || c.policy.CheckRetry(nil, fmt.Errorf("wrapped: %w", refused)) {
+		t.Error("NewClient's policy retries a refused token")
+	}
+	if c.ForOrg(1).policy.CheckRetry == nil {
+		t.Error("ForOrg's child lost the check")
+	}
+}
+
+// TestForOrgRefusedTokenIntegration checks against the live API that a child org the key
+// may not act for is refused on the token request with a 4xx, after one attempt.
+func TestForOrgRefusedTokenIntegration(t *testing.T) {
+	c := newTestClient(t)
+	lim := &countingLimiter{Limiter: c.policy.Limiter}
+	c.policy.Limiter = lim
+	_, err := c.ForOrg(1).GetOrganizationInfo(context.Background())
+	var re *oauth2.RetrieveError
+	if !errors.As(err, &re) {
+		t.Fatalf("err = %v, want a *oauth2.RetrieveError", err)
+	}
+	if code := re.Response.StatusCode; code < 400 || code >= 500 || code == http.StatusTooManyRequests {
+		t.Fatalf("token answer %d, want a 4xx refusal other than 429", code)
+	}
+	if got := lim.waits.Load(); got != 1 {
+		t.Errorf("limiter waits = %d, want 1", got)
+	}
+	t.Logf("org 1 refused with %d after one attempt: %v", re.Response.StatusCode, err)
 }
